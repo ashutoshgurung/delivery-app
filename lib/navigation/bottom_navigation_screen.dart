@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:food_ordering_app/view/favourite_screen.dart';
-import 'package:food_ordering_app/view/home_scren.dart';
+import 'package:food_ordering_app/view/home_screen.dart';
 import 'package:food_ordering_app/view/order_screen.dart';
 import 'package:food_ordering_app/view/profile_screen.dart';
 

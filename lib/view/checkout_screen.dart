@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ordering_app/model/addtocart_model.dart';
 import 'package:food_ordering_app/model/order_model.dart';
+import 'package:food_ordering_app/model/payment_model.dart';
 import 'package:food_ordering_app/view/delivery_in_progress_screen.dart';
+import 'package:food_ordering_app/view/payment_screen.dart';
 import 'package:food_ordering_app/viewmodel/addtoCart_view_model.dart';
 import 'package:food_ordering_app/viewmodel/receipt_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,6 +52,11 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       'icon': Icons.money_rounded,
       'label': 'Cash on Delivery',
       'sub': 'Pay later',
+    },
+    {
+      'icon': Icons.account_balance_wallet_rounded,
+      'label': 'Khalti',
+      'sub': 'Digital Wallet',
     },
   ];
 
@@ -132,14 +139,16 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     );
   }
 
-  // ── Place order — saves to Firestore ─────────────────────────
   void _placeOrder(List<AddtocartModel> items) async {
     setState(() => _isPlacingOrder = true);
 
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+      // Step 1: get basic info
+      final user = FirebaseAuth.instance.currentUser;
+      final uid = user?.uid;
       final orderId = 'ORD-${DateTime.now().millisecondsSinceEpoch}';
 
+      // Step 2: turn cart items into a simple list for the order
       final orderItems = items
           .map(
             (item) => {
@@ -152,17 +161,43 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
       final total = _total(items).toInt();
 
-      // ── Save to Firestore ──────────────────────────────────
-      if (uid != null) {
-        final order = OrderModel(
-          id: orderId,
-          restaurantName: widget.restaurantName,
-          items: orderItems,
-          totalPrice: total,
-          status: 'pending',
-          createdAt: DateTime.now(),
+      // Step 3: build the order object (for Firestore / receipts)
+      final order = OrderModel(
+        id: orderId,
+        restaurantName: widget.restaurantName,
+        items: orderItems,
+        totalPrice: total,
+        status: 'pending',
+        createdAt: DateTime.now(),
+      );
+
+      // Step 4: if user picked Khalti (index 3), go to PaymentScreen first
+      if (_selectedPayment == 3) {
+        setState(() => _isPlacingOrder = false);
+
+        if (!mounted) return;
+
+        // Build the payment request PaymentScreen actually needs
+        final paymentRequest = OrderPaymentRequest(
+          orderId: orderId,
+          orderName: 'Order from ${widget.restaurantName}',
+          amountInPaisa: total * 100, // Rs. -> paisa
+          customerName: user?.displayName ?? 'Guest',
+          customerEmail: user?.email ?? '',
+          customerPhone: user?.phoneNumber ?? '',
         );
 
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymentScreen(order: paymentRequest),
+          ),
+        );
+        return; // stop here, don't save to Firestore yet
+      }
+
+      // Step 5: for every other payment method, save straight to Firestore
+      if (uid != null) {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
@@ -170,14 +205,14 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             .add(order.toMap());
       }
 
-      // ── Save to ReceiptProvider (for receipt screen) ────────
+      // Step 6: save to receipt provider
       if (!mounted) return;
       context.read<ReceiptProvider>().createReceipt(
         orderId: orderId,
         items: orderItems,
       );
 
-      // ── Clear cart ─────────────────────────────────────────
+      // Step 7: clear the cart
       context.read<AddtocartProvider>().clearCart();
 
       setState(() => _isPlacingOrder = false);

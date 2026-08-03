@@ -15,7 +15,7 @@ class OrderScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        automaticallyImplyLeading: true,
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.red,
         elevation: 0,
         title: Text(
@@ -246,7 +246,18 @@ class _OrderCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                _StatusBadge(status: order.status),
+                Row(
+                  children: [
+                    _StatusBadge(status: order.status),
+                    SizedBox(width: 5),
+                    IconButton(
+                      onPressed: () {
+                        _deleteOrder(context, order.id);
+                      },
+                      icon: Icon(Icons.delete, color: Colors.red),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -328,6 +339,49 @@ class _OrderCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+Future<void> _deleteOrder(BuildContext context, String orderId) async {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+
+  if (uid == null) return;
+
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text("Delete Order"),
+      content: const Text("Are you sure you want to delete this order?"),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text("Delete", style: TextStyle(color: Colors.white)),
+        ),
+      ],
+    ),
+  );
+
+  if (confirm != true) return;
+
+  await FirebaseFirestore.instance
+      .collection('users')
+      .doc(uid)
+      .collection('orders')
+      .doc(orderId)
+      .delete();
+
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Order deleted successfully"),
+        backgroundColor: Colors.red,
       ),
     );
   }

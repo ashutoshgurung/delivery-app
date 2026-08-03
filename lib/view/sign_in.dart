@@ -20,6 +20,13 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _rememberMe = false;
 
   @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 

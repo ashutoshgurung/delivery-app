@@ -38,13 +38,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return const Color(0xFF22AA55);
   }
 
+  Future<void> _handleSignUp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (!_agreed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please agree to the Terms of Service and Privacy Policy"),
+        ),
+      );
+      return;
+    }
+
+    final authViewModel = context.read<AuthViewModel>();
+    final success = await authViewModel.signUp(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Account created successfully")),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => SignInScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authViewModel.errorMessage ?? "Sign up failed"),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<AuthViewModel>().isLoading;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF6F6F6),
       body: Stack(
         children: [
-          // ── Top red header block ──
           Positioned(
             top: 0,
             left: 0,
@@ -60,8 +98,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             ),
           ),
-
-          // ── Decorative dots top-right ──
           Positioned(
             top: 30,
             right: 30,
@@ -88,7 +124,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             ),
           ),
-
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -98,7 +133,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                
                     Row(
                       children: [
                         GestureDetector(
@@ -119,10 +153,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-                
                     const SizedBox(height: 24),
-                
-                    // ── Header text (over red bg) ──
                     const Text(
                       'Create\nAccount',
                       style: TextStyle(
@@ -133,12 +164,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         letterSpacing: -1.2,
                       ),
                     ),
-                
                     const SizedBox(height: 6),
-                
                     const SizedBox(height: 30),
-                
-                    // ── White card ──
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.fromLTRB(22, 28, 22, 28),
@@ -157,8 +184,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 20),
-                
-                          // ── Email ──
                           const Text(
                             'EMAIL ADDRESS',
                             style: TextStyle(
@@ -210,9 +235,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ],
                             ),
                           ),
-                
                           const SizedBox(height: 20),
-                
                           const Text(
                             'PASSWORD',
                             style: TextStyle(
@@ -279,8 +302,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ],
                             ),
                           ),
-                
-                          // ── Strength bar ──
                           if (_strength > 0) ...[
                             const SizedBox(height: 10),
                             Row(
@@ -305,10 +326,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ],
                             ),
                           ],
-                
                           const SizedBox(height: 20),
-                
-                          // ── Confirm Password ──
                           const Text(
                             'CONFIRM PASSWORD',
                             style: TextStyle(
@@ -378,10 +396,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ],
                             ),
                           ),
-                
                           const SizedBox(height: 24),
-                
-                          // ── Terms ──
                           GestureDetector(
                             onTap: () => setState(() => _agreed = !_agreed),
                             child: Row(
@@ -447,31 +462,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ],
                       ),
                     ),
-                
                     const SizedBox(height: 24),
-                
-                    // ── Create Account button ──
                     GestureDetector(
-                      onTap: () async {
-                        if (_formKey.currentState!.validate()) {
-                          final authViewModel = context.read<AuthViewModel>();
-                          bool success = await authViewModel.signUp(
-                            email: emailController.text.trim(),
-                            password: passwordController.text.trim(),
-                          );
-                          if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Account created successfully"),
-                              ),
-                            );
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => SignInScreen()),
-                            );
-                          }
-                        }
-                      },
+                      onTap: isLoading ? null : _handleSignUp,
                       child: Container(
                         height: 58,
                         width: double.infinity,
@@ -486,23 +479,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ],
                         ),
-                        child: const Center(
-                          child: Text(
-                            'Create Account',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
+                        child: Center(
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Create Account',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
-                
                     const SizedBox(height: 22),
-                
-                    // ── Divider ──
                     Row(
                       children: [
                         Expanded(
@@ -529,10 +528,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-                
                     const SizedBox(height: 18),
-                
-                    // ── Social ──
                     Row(
                       children: [
                         Expanded(
@@ -620,10 +616,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-                
                     const SizedBox(height: 28),
-                
-                    // ── Go to Sign In ──
                     Center(
                       child: GestureDetector(
                         onTap: () => Navigator.push(
@@ -650,7 +643,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ),
                     ),
-                
                     const SizedBox(height: 36),
                   ],
                 ),
