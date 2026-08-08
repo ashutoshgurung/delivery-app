@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ordering_app/model/favourite_model.dart';
 import 'package:food_ordering_app/model/popular_restaurant_detail_screen_model.dart';
@@ -9,6 +10,7 @@ import 'package:food_ordering_app/viewmodel/favourite_provider.dart';
 import 'package:food_ordering_app/viewmodel/search_view_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +20,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int activeIndex = 0;
+  final List banner = [
+    'assets/images/banner1.png',
+    'assets/images/banner2.png',
+    'assets/images/banner3.png',
+  ];
+
+  final List discount = ["20% OFF", "10% OFF", "30% OFF"];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +37,6 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const SizedBox(height: 45),
 
-            // ── Header ───────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Row(
@@ -111,7 +120,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 25),
 
-            // ── Search bar ───────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Container(
@@ -158,12 +166,95 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            SizedBox(height: 30),
+            CarouselSlider.builder(
+              itemCount: banner.length,
+              itemBuilder: ((context, index, realIndex) {
+                return ClipRRect(
+                  borderRadius: BorderRadiusGeometry.circular(21),
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 200,
+                        width: double.maxFinite,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(45),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.10),
+                              blurRadius: 12,
+                              offset: Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          banner[index],
+                          fit: BoxFit.cover,
+                          width: double.maxFinite,
+                        ),
+                      ),
+                      Positioned(
+                        left: 20,
+                        top: 25,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              discount[index],
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 30,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              "Get delicious food at a special price",
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              options: CarouselOptions(
+                height: 160,
+                autoPlay: true,
+                autoPlayInterval: Duration(seconds: 3),
+                autoPlayAnimationDuration: Duration(milliseconds: 800),
+                autoPlayCurve: Curves.easeInOut,
+                enlargeCenterPage: true,
+                viewportFraction: 0.9,
+                onPageChanged: ((index, reason) {
+                  setState(() {
+                    activeIndex = index;
+                  });
+                }),
+              ),
+            ),
+            SizedBox(height: 10),
+            AnimatedSmoothIndicator(
+              activeIndex: activeIndex,
+              count: banner.length,
+              effect: WormEffect(
+                dotHeight: 6,
+                dotWidth: 6,
+                spacing: 8,
+                strokeWidth: 0,
+                activeDotColor: Colors.white.withValues(alpha: 0.5),
+                dotColor: Colors.grey,
+              ),
+            ),
 
-            const SizedBox(height: 30),
+            SizedBox(height: 30),
 
-            // ── Section title ────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -174,17 +265,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontSize: 15,
                     ),
                   ),
-                  Text(
-                    'View All',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.black.withValues(alpha: 0.5),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ViewAllResturants(restaurants: restaurants),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'View All',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black.withValues(alpha: 0.5),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 5),
+       
 
             Consumer<FavouriteViewModel>(
               builder: (context, favouriteProvider, child) {
@@ -209,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         vertical: 10,
                       ),
                       child: Container(
-                        height: 280,
+                        height: 255,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(18),
