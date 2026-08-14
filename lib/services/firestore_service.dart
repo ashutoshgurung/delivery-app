@@ -354,6 +354,42 @@ class FirestoreService {
 
     await batch.commit();
   }
+  // ─────────────────────────────────────────────────────────────────────
+// ADMIN - DELETE ORDER
+//
+// Deletes BOTH:
+//
+// orders/{orderId}
+//
+// and
+//
+// users/{customerId}/orders/{orderId}
+// ─────────────────────────────────────────────────────────────────────
+
+Future<void> deleteOrder({
+  required String orderId,
+  required String customerId,
+}) async {
+  final batch = _db.batch();
+
+  // Admin order
+  final adminOrderRef = _db
+      .collection('orders')
+      .doc(orderId);
+
+  batch.delete(adminOrderRef);
+
+  // Customer order
+  final customerOrderRef = _db
+      .collection('users')
+      .doc(customerId)
+      .collection('orders')
+      .doc(orderId);
+
+  batch.delete(customerOrderRef);
+
+  await batch.commit();
+}
 
   // ─────────────────────────────────────────────────────────────────────
   // ADDRESSES

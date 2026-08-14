@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:food_ordering_app/navigation/bottom_navigation_screen.dart';
 import 'package:food_ordering_app/utils/validator.dart';
+import 'package:food_ordering_app/view/admin_dashboard_screen.dart';
 import 'package:food_ordering_app/view/sign_up.dart';
 import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
 import 'package:provider/provider.dart';
@@ -423,29 +424,27 @@ class _SignInScreenState extends State<SignInScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () async {
-                              final authViewModel = context
+                              final authviewModel = context
                                   .read<AuthViewModel>();
-
-                              final success = await authViewModel
+                              final success = await authviewModel
                                   .signInWithGoogle();
-
-                              if (!mounted) return;
-
-                              if (success) {
+                              if (!success) {
+                                return;
+                              }
+                              final role = await authviewModel
+                                  .getCurrentUserRole();
+                              if (!context.mounted) return;
+                              if (role == 'admin') {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const NavigationScreen(),
+                                    builder: (_) => AdminDashboardScreen(),
                                   ),
                                 );
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      authViewModel.errorMessage ??
-                                          "Google sign-in failed. Please try again.",
-                                    ),
-                                  ),
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  '/navigation',
                                 );
                               }
                             },

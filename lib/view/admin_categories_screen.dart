@@ -30,6 +30,7 @@ class _AdminCategoriesBody extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
+        centerTitle: true,
       ),
 
       floatingActionButton: FloatingActionButton(

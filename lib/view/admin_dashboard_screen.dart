@@ -2,73 +2,165 @@ import 'package:flutter/material.dart';
 import 'package:food_ordering_app/view/admin_categories_screen.dart';
 import 'package:food_ordering_app/view/admin_food_screen.dart';
 import 'package:food_ordering_app/view/admin_order_screen.dart';
+import 'package:food_ordering_app/view/admin_user_screen.dart';
+import 'package:food_ordering_app/view/sign_in.dart';
+import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    await context.read<AuthViewModel>().logOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const SignInScreen()),
+      (route) => false,
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Logout',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                await _logout(context);
+              },
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        backgroundColor: Colors.red,
+        title: Text(
           'Admin Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
+
+        // LOGOUT BUTTON
+        actions: [
+          IconButton(
+            tooltip: 'Logout',
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () {
+              _showLogoutDialog(context);
+            },
+          ),
+        ],
       ),
 
-      body: GridView.count(
-        padding: const EdgeInsets.all(20),
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-
+      body: Column(
         children: [
-          _DashboardCard(
-            icon: Icons.receipt_long,
-            title: 'Orders',
-            color: Colors.orange,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AdminOrderScreen()),
-              );
-            },
+          SizedBox(height: 50),
+          Text(
+            "Welcome, Admin",
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.red,
+            ),
           ),
-
-          _DashboardCard(
-            icon: Icons.restaurant,
-            title: 'Food',
-            color: Colors.red,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AdminFoodScreen()),
-              );
-            },
+          SizedBox(height: 10),
+          Text(
+            "Manage your food ordering application",
+            style: GoogleFonts.poppins(fontSize: 10),
           ),
+          SizedBox(height: 50),
+          Expanded(
+            child: GridView.count(
+              padding: const EdgeInsets.all(20),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                // ORDERS
+                _DashboardCard(
+                  icon: Icons.receipt_long,
+                  title: 'Orders',
+                  color: Colors.orange,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AdminOrderScreen(),
+                      ),
+                    );
+                  },
+                ),
 
-          _DashboardCard(
-            icon: Icons.category,
-            title: 'Categories',
-            color: Colors.blue,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AdminCategoriesScreen()),
-              );
-            },
-          ),
+                // FOOD
+                _DashboardCard(
+                  icon: Icons.restaurant,
+                  title: 'Food',
+                  color: Colors.red,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AdminFoodScreen()),
+                    );
+                  },
+                ),
 
-          _DashboardCard(
-            icon: Icons.people,
-            title: 'Users',
-            color: Colors.green,
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Users coming soon')),
-              );
-            },
+                // CATEGORIES
+                _DashboardCard(
+                  icon: Icons.category,
+                  title: 'Categories',
+                  color: Colors.blue,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdminCategoriesScreen(),
+                      ),
+                    );
+                  },
+                ),
+
+                // USERS
+                _DashboardCard(
+                  icon: Icons.people,
+                  title: 'Users',
+                  color: Colors.green,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AdminUsersScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -94,7 +186,6 @@ class _DashboardCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
-
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -107,7 +198,6 @@ class _DashboardCard extends StatelessWidget {
             ),
           ],
         ),
-
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

@@ -26,33 +26,25 @@ class _AdminOrderBody extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Orders',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
+          
         ),
+        centerTitle: true,
       ),
       body: _buildBody(context, vm),
     );
   }
 
-  Widget _buildBody(
-    BuildContext context,
-    AdminOrderViewModel vm,
-  ) {
+  Widget _buildBody(BuildContext context, AdminOrderViewModel vm) {
     if (vm.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (vm.errorMessage != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Text(
-            vm.errorMessage!,
-            textAlign: TextAlign.center,
-          ),
+          child: Text(vm.errorMessage!, textAlign: TextAlign.center),
         ),
       );
     }
@@ -62,18 +54,11 @@ class _AdminOrderBody extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 70,
-              color: Colors.grey,
-            ),
+            Icon(Icons.receipt_long_outlined, size: 70, color: Colors.grey),
             SizedBox(height: 16),
             Text(
               'No orders yet',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -90,9 +75,7 @@ class _AdminOrderBody extends StatelessWidget {
         itemBuilder: (context, index) {
           final order = vm.orders[index];
 
-          return _OrderCard(
-            order: order,
-          );
+          return _OrderCard(order: order);
         },
       ),
     );
@@ -106,9 +89,7 @@ class _AdminOrderBody extends StatelessWidget {
 class _OrderCard extends StatefulWidget {
   final OrderModel order;
 
-  const _OrderCard({
-    required this.order,
-  });
+  const _OrderCard({required this.order});
 
   @override
   State<_OrderCard> createState() => _OrderCardState();
@@ -138,6 +119,92 @@ class _OrderCardState extends State<_OrderCard> {
     }
   }
 
+  Future<void> _deleteOrder() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Delete Order?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text(
+            'Are you sure you want to delete Order #${widget.order.id}?\n\n'
+            'This will permanently remove the order from both the admin '
+            'and customer order history.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      isUpdating = true;
+    });
+
+    try {
+      final vm = context.read<AdminOrderViewModel>();
+
+      await vm.deleteOrder(widget.order);
+
+      if (!mounted) return;
+
+      if (vm.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(vm.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Order deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete order: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isUpdating = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -148,10 +215,6 @@ class _OrderCardState extends State<_OrderCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ======================================================
-            // HEADER
-            // ======================================================
-
             Row(
               children: [
                 Expanded(
@@ -163,9 +226,7 @@ class _OrderCardState extends State<_OrderCard> {
                     ),
                   ),
                 ),
-                _StatusBadge(
-                  status: widget.order.status,
-                ),
+                _StatusBadge(status: widget.order.status),
               ],
             ),
 
@@ -175,10 +236,6 @@ class _OrderCardState extends State<_OrderCard> {
 
             const SizedBox(height: 10),
 
-            // ======================================================
-            // CUSTOMER
-            // ======================================================
-
             if (widget.order.customerName != null &&
                 widget.order.customerName!.isNotEmpty)
               _InfoRow(
@@ -186,10 +243,6 @@ class _OrderCardState extends State<_OrderCard> {
                 title: 'Customer',
                 value: widget.order.customerName!,
               ),
-
-            // ======================================================
-            // EMAIL
-            // ======================================================
 
             if (widget.order.customerEmail != null &&
                 widget.order.customerEmail!.isNotEmpty)
@@ -199,29 +252,17 @@ class _OrderCardState extends State<_OrderCard> {
                 value: widget.order.customerEmail!,
               ),
 
-            // ======================================================
-            // RESTAURANT
-            // ======================================================
-
             _InfoRow(
               icon: Icons.restaurant_outlined,
               title: 'Restaurant',
               value: widget.order.restaurantName,
             ),
 
-            // ======================================================
-            // TOTAL
-            // ======================================================
-
             _InfoRow(
               icon: Icons.currency_rupee,
               title: 'Total',
               value: 'Rs. ${widget.order.totalPrice}',
             ),
-
-            // ======================================================
-            // ADDRESS
-            // ======================================================
 
             if (widget.order.address != null &&
                 widget.order.address!.isNotEmpty)
@@ -231,10 +272,6 @@ class _OrderCardState extends State<_OrderCard> {
                 value: widget.order.address!,
               ),
 
-            // ======================================================
-            // DATE
-            // ======================================================
-
             _InfoRow(
               icon: Icons.access_time,
               title: 'Ordered',
@@ -243,31 +280,16 @@ class _OrderCardState extends State<_OrderCard> {
 
             const SizedBox(height: 12),
 
-            // ======================================================
-            // ITEMS
-            // ======================================================
-
             const Text(
               'Items',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
 
             const SizedBox(height: 8),
 
-            ...widget.order.items.map(
-              (item) => _ItemRow(
-                item: item,
-              ),
-            ),
+            ...widget.order.items.map((item) => _ItemRow(item: item)),
 
             const SizedBox(height: 16),
-
-            // ======================================================
-            // SELECT STATUS
-            // ======================================================
 
             DropdownButtonFormField<String>(
               value: selectedStatus,
@@ -276,26 +298,14 @@ class _OrderCardState extends State<_OrderCard> {
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(
-                  value: 'pending',
-                  child: Text('Pending'),
-                ),
-                DropdownMenuItem(
-                  value: 'preparing',
-                  child: Text('Preparing'),
-                ),
+                DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                DropdownMenuItem(value: 'preparing', child: Text('Preparing')),
                 DropdownMenuItem(
                   value: 'out_for_delivery',
                   child: Text('Out for Delivery'),
                 ),
-                DropdownMenuItem(
-                  value: 'delivered',
-                  child: Text('Delivered'),
-                ),
-                DropdownMenuItem(
-                  value: 'cancelled',
-                  child: Text('Cancelled'),
-                ),
+                DropdownMenuItem(value: 'delivered', child: Text('Delivered')),
+                DropdownMenuItem(value: 'cancelled', child: Text('Cancelled')),
               ],
               onChanged: isUpdating
                   ? null
@@ -310,10 +320,6 @@ class _OrderCardState extends State<_OrderCard> {
 
             const SizedBox(height: 12),
 
-            // ======================================================
-            // UPDATE BUTTON
-            // ======================================================
-
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -325,8 +331,7 @@ class _OrderCardState extends State<_OrderCard> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: isUpdating ||
-                        selectedStatus == widget.order.status
+                onPressed: isUpdating || selectedStatus == widget.order.status
                     ? null
                     : _updateStatus,
                 child: isUpdating
@@ -347,15 +352,32 @@ class _OrderCardState extends State<_OrderCard> {
                       ),
               ),
             ),
+            SizedBox(height: 10),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: isUpdating ? null : _deleteOrder,
+                icon: const Icon(Icons.delete_outline),
+                label: const Text(
+                  'Delete Order',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-
-  // ==============================================================
-  // UPDATE STATUS
-  // ==============================================================
 
   Future<void> _updateStatus() async {
     setState(() {
@@ -365,10 +387,7 @@ class _OrderCardState extends State<_OrderCard> {
     try {
       final vm = context.read<AdminOrderViewModel>();
 
-      await vm.changeStatus(
-        widget.order,
-        selectedStatus,
-      );
+      await vm.changeStatus(widget.order, selectedStatus);
 
       if (!mounted) return;
 
@@ -448,10 +467,6 @@ class _OrderCardState extends State<_OrderCard> {
   }
 }
 
-// ================================================================
-// INFO ROW
-// ================================================================
-
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -470,69 +485,37 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-          ),
+          Icon(icon, size: 20),
           const SizedBox(width: 10),
-          Text(
-            '$title: ',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Expanded(
-            child: Text(value),
-          ),
+          Text('$title: ', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Expanded(child: Text(value)),
         ],
       ),
     );
   }
 }
 
-// ================================================================
-// ITEM ROW
-// ================================================================
-
 class _ItemRow extends StatelessWidget {
   final Map<String, dynamic> item;
 
-  const _ItemRow({
-    required this.item,
-  });
+  const _ItemRow({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    final name =
-        item['name'] ??
-        item['title'] ??
-        item['foodName'] ??
-        'Item';
+    final name = item['name'] ?? item['title'] ?? item['foodName'] ?? 'Item';
 
-    final quantity =
-        item['qty'] ??
-        item['quantity'] ??
-        1;
+    final quantity = item['qty'] ?? item['quantity'] ?? 1;
 
-    final price =
-        item['price'] ??
-        item['totalPrice'] ??
-        0;
+    final price = item['price'] ?? item['totalPrice'] ?? 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              '$name × $quantity',
-            ),
-          ),
+          Expanded(child: Text('$name × $quantity')),
           Text(
             'Rs. $price',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -540,16 +523,10 @@ class _ItemRow extends StatelessWidget {
   }
 }
 
-// ================================================================
-// STATUS BADGE
-// ================================================================
-
 class _StatusBadge extends StatelessWidget {
   final String status;
 
-  const _StatusBadge({
-    required this.status,
-  });
+  const _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -593,10 +570,7 @@ class _StatusBadge extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 6,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
@@ -604,11 +578,7 @@ class _StatusBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 13,
-            color: color,
-          ),
+          Icon(icon, size: 13, color: color),
           const SizedBox(width: 4),
           Text(
             label,

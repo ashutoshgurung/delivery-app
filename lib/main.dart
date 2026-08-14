@@ -97,6 +97,7 @@ import 'package:food_ordering_app/view/sign_in.dart';
 import 'package:food_ordering_app/view/splash_screen.dart';
 import 'package:food_ordering_app/viewmodel/addtoCart_view_model.dart';
 import 'package:food_ordering_app/viewmodel/address_view_model.dart';
+import 'package:food_ordering_app/viewmodel/admin_order_view_model.dart';
 import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
 import 'package:food_ordering_app/viewmodel/favourite_provider.dart';
 import 'package:food_ordering_app/viewmodel/location_view_model.dart';
@@ -145,6 +146,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => LocationViewModel()),
         ChangeNotifierProvider(create: (_) => SearchViewModel()),
+        ChangeNotifierProvider(create: (_) => AdminOrderViewModel()),
 
         // ── Khalti payment ────────────────────────────────────────
         Provider<KhaltiService>(
@@ -172,7 +174,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
       ),
-      home: const AdminDashboardScreen(),
+      home: const SplashScreen(),
       routes: {
         "/signin": (context) => const SignInScreen(),
         "/navigation": (context) => const NavigationScreen(),
