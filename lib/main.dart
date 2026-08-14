@@ -92,6 +92,7 @@ import 'package:food_ordering_app/model/addon_model.dart';
 import 'package:food_ordering_app/model/favourite_model.dart';
 import 'package:food_ordering_app/navigation/bottom_navigation_screen.dart';
 import 'package:food_ordering_app/services/khalti_service.dart';
+import 'package:food_ordering_app/view/admin_dashboard_screen.dart';
 import 'package:food_ordering_app/view/sign_in.dart';
 import 'package:food_ordering_app/view/splash_screen.dart';
 import 'package:food_ordering_app/viewmodel/addtoCart_view_model.dart';
@@ -171,7 +172,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
       ),
-      home: const SplashScreen(),
+      home: const AdminDashboardScreen(),
       routes: {
         "/signin": (context) => const SignInScreen(),
         "/navigation": (context) => const NavigationScreen(),

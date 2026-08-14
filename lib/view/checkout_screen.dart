@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:food_ordering_app/model/addtocart_model.dart';
 import 'package:food_ordering_app/model/order_model.dart';
 import 'package:food_ordering_app/model/payment_model.dart';
+import 'package:food_ordering_app/services/firestore_service.dart';
 import 'package:food_ordering_app/view/delivery_in_progress_screen.dart';
 import 'package:food_ordering_app/view/payment_screen.dart';
 import 'package:food_ordering_app/viewmodel/addtoCart_view_model.dart';
@@ -139,29 +140,34 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     );
   }
 
-  void _placeOrder(List<AddtocartModel> items) async {
-    setState(() => _isPlacingOrder = true);
+  Future<void> _placeOrder(List<AddtocartModel> items) async {
+    if (_isPlacingOrder) return;
+
+    setState(() {
+      _isPlacingOrder = true;
+    });
 
     try {
-      // Step 1: get basic info
       final user = FirebaseAuth.instance.currentUser;
-      final uid = user?.uid;
+
+      if (user == null) {
+        setState(() {
+          _isPlacingOrder = false;
+        });
+
+        _showSnack('Please login before placing an order.', Colors.red);
+
+        return;
+      }
+
       final orderId = 'ORD-${DateTime.now().millisecondsSinceEpoch}';
 
-      // Step 2: turn cart items into a simple list for the order
-      final orderItems = items
-          .map(
-            (item) => {
-              'name': item.name,
-              'qty': item.quantity,
-              'price': item.price,
-            },
-          )
-          .toList();
+      final orderItems = items.map((item) {
+        return {'name': item.name, 'qty': item.quantity, 'price': item.price};
+      }).toList();
 
       final total = _total(items).toInt();
 
-      // Step 3: build the order object (for Firestore / receipts)
       final order = OrderModel(
         id: orderId,
         restaurantName: widget.restaurantName,
@@ -169,22 +175,27 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         totalPrice: total,
         status: 'pending',
         createdAt: DateTime.now(),
+
+        customerId: user.uid,
+        customerName: user.displayName ?? 'Customer',
+        customerEmail: user.email ?? '',
       );
 
-      // Step 4: if user picked Khalti (index 3), go to PaymentScreen first
+      // Khalti
       if (_selectedPayment == 3) {
-        setState(() => _isPlacingOrder = false);
+        setState(() {
+          _isPlacingOrder = false;
+        });
 
         if (!mounted) return;
 
-        // Build the payment request PaymentScreen actually needs
         final paymentRequest = OrderPaymentRequest(
           orderId: orderId,
           orderName: 'Order from ${widget.restaurantName}',
-          amountInPaisa: total * 100, // Rs. -> paisa
-          customerName: user?.displayName ?? 'Guest',
-          customerEmail: user?.email ?? '',
-          customerPhone: user?.phoneNumber ?? '',
+          amountInPaisa: total * 100,
+          customerName: user.displayName ?? 'Guest',
+          customerEmail: user.email ?? '',
+          customerPhone: user.phoneNumber ?? '',
         );
 
         Navigator.push(
@@ -193,32 +204,40 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             builder: (_) => PaymentScreen(order: paymentRequest),
           ),
         );
-        return; // stop here, don't save to Firestore yet
+
+        return;
       }
 
-      // Step 5: for every other payment method, save straight to Firestore
-      if (uid != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('orders')
-            .add(order.toMap());
-      }
+      // Save order to Firebase
+      final firestoreService = FirestoreService();
 
-      // Step 6: save to receipt provider
+      await firestoreService.placeOrder(user.uid, order);
+
       if (!mounted) return;
+
+      // Receipt
       context.read<ReceiptProvider>().createReceipt(
         orderId: orderId,
         items: orderItems,
       );
 
-      // Step 7: clear the cart
+      // Clear cart
       context.read<AddtocartProvider>().clearCart();
 
-      setState(() => _isPlacingOrder = false);
+      setState(() {
+        _isPlacingOrder = false;
+      });
+
       _showOrderSuccess();
     } catch (e) {
-      setState(() => _isPlacingOrder = false);
+      debugPrint('PLACE ORDER ERROR: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isPlacingOrder = false;
+      });
+
       _showSnack('Failed to place order. Please try again.', Colors.red);
     }
   }

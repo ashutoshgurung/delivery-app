@@ -452,6 +452,11 @@ class _StatusBadge extends StatelessWidget {
         icon: Icons.restaurant_rounded,
         label: 'Preparing',
       ),
+      'out_for_delivery' => (
+        color: Colors.deepOrange,
+        icon: Icons.delivery_dining_rounded,
+        label: 'Out for Delivery',
+      ),
       'cancelled' => (
         color: Colors.red,
         icon: Icons.cancel_rounded,

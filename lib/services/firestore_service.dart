@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:food_ordering_app/features/features_flag.dart';
 import 'package:food_ordering_app/model/address_model.dart';
 import 'package:food_ordering_app/model/favourite_model.dart';
@@ -9,7 +10,10 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final LocationService _locationService = LocationService();
 
-  // ── USER ────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────
+  // USER
+  // ─────────────────────────────────────────────────────────────────────
+
   Future<void> saveUser({
     required String uid,
     required String name,
@@ -20,6 +24,7 @@ class FirestoreService {
       'name': name,
       'email': email,
       'imageUrl': imageUrl,
+      'role': 'customer',
       'createdAt': Timestamp.now(),
     });
   }
@@ -39,6 +44,7 @@ class FirestoreService {
         'name': name,
         'email': email,
         'imageUrl': imageUrl,
+        'role': 'customer',
         'createdAt': Timestamp.now(),
       });
     }
@@ -48,6 +54,38 @@ class FirestoreService {
     return await _db.collection('users').doc(uid).get();
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  // USER ROLE
+  // ─────────────────────────────────────────────────────────────────────
+
+  Future<String> getUserRole(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+
+    if (!doc.exists) {
+      return 'customer';
+    }
+
+    final data = doc.data();
+
+    if (data == null) {
+      return 'customer';
+    }
+
+    return data['role'] ?? 'customer';
+  }
+
+  Future<void> setUserRole({
+    required String uid,
+    required String role,
+  }) async {
+    await _db.collection('users').doc(uid).set(
+      {
+        'role': role,
+      },
+      SetOptions(merge: true),
+    );
+  }
+
   Future<void> updateUser({
     required String uid,
     String? name,
@@ -55,15 +93,23 @@ class FirestoreService {
   }) async {
     final data = <String, dynamic>{};
 
-    if (name != null) data['name'] = name;
-    if (imageUrl != null) data['imageUrl'] = imageUrl;
+    if (name != null) {
+      data['name'] = name;
+    }
+
+    if (imageUrl != null) {
+      data['imageUrl'] = imageUrl;
+    }
 
     if (data.isNotEmpty) {
       await _db.collection('users').doc(uid).update(data);
     }
   }
 
-  // ── FAVOURITES (FEATURE TOGGLED) ────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────
+  // FAVOURITES
+  // ─────────────────────────────────────────────────────────────────────
+
   Stream<List<FavouriteModel>> favouritesStream(String uid) {
     if (!FeatureFlags.enableFavourites) {
       return const Stream.empty();
@@ -76,12 +122,20 @@ class FirestoreService {
         .snapshots()
         .map(
           (snap) => snap.docs
-              .map((doc) => FavouriteModel.fromMap(doc.id, doc.data()))
+              .map(
+                (doc) => FavouriteModel.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
               .toList(),
         );
   }
 
-  Future<void> addFavourite(String uid, FavouriteModel item) async {
+  Future<void> addFavourite(
+    String uid,
+    FavouriteModel item,
+  ) async {
     if (!FeatureFlags.enableFavourites) return;
 
     await _db
@@ -92,7 +146,10 @@ class FirestoreService {
         .set(item.toMap());
   }
 
-  Future<void> removeFavourite(String uid, String title) async {
+  Future<void> removeFavourite(
+    String uid,
+    String title,
+  ) async {
     if (!FeatureFlags.enableFavourites) return;
 
     await _db
@@ -103,43 +160,208 @@ class FirestoreService {
         .delete();
   }
 
-  // ── ORDERS ───────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────
+  // CUSTOMER ORDERS
+  // ─────────────────────────────────────────────────────────────────────
+
   Stream<List<OrderModel>> ordersStream(String uid) {
     return _db
         .collection('users')
         .doc(uid)
         .collection('orders')
-        .orderBy('createdAt', descending: true)
+        .orderBy(
+          'createdAt',
+          descending: true,
+        )
         .snapshots()
         .map(
           (snap) => snap.docs
-              .map((doc) => OrderModel.fromMap(doc.id, doc.data()))
+              .map(
+                (doc) => OrderModel.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
               .toList(),
         );
   }
 
-  Future<void> placeOrder(String uid, OrderModel order) async {
-    final locationData = await _locationService.getLocationWithAddress();
+  // ─────────────────────────────────────────────────────────────────────
+  // PLACE ORDER
+  //
+  // Saves the same order in:
+  //
+  // orders/{orderId}
+  //
+  // and
+  //
+  // users/{uid}/orders/{orderId}
+  // ─────────────────────────────────────────────────────────────────────
+
+  Future<String> placeOrder(
+    String uid,
+    OrderModel order,
+  ) async {
+    final user = await _db
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    final userData = user.data() ?? {};
+
+    final locationData =
+        await _locationService.getLocationWithAddress();
+
+    final orderRef = _db
+        .collection('orders')
+        .doc();
+
+    final currentUser =
+        FirebaseAuth.instance.currentUser;
+
     final updatedOrder = OrderModel(
-      id: order.id,
+      id: orderRef.id,
       restaurantName: order.restaurantName,
       items: order.items,
       totalPrice: order.totalPrice,
-      status: order.status,
+
+      // Every new order starts as pending.
+      status: 'pending',
+
       createdAt: order.createdAt,
+
+      customerId: uid,
+
+      customerName:
+          userData['name'] ??
+          currentUser?.displayName ??
+          'Customer',
+
+      customerEmail:
+          userData['email'] ??
+          currentUser?.email ??
+          '',
+
       lat: locationData['lat'],
       lng: locationData['lng'],
       address: locationData['address'],
     );
-    await _db
+
+    final orderData = updatedOrder.toMap();
+
+    final batch = _db.batch();
+
+    // ─────────────────────────────────────────────────────────
+    // ADMIN ORDER
+    // ─────────────────────────────────────────────────────────
+
+    batch.set(
+      orderRef,
+      orderData,
+    );
+
+    // ─────────────────────────────────────────────────────────
+    // CUSTOMER ORDER
+    // ─────────────────────────────────────────────────────────
+
+    final customerOrderRef = _db
         .collection('users')
         .doc(uid)
         .collection('orders')
-        .add(updatedOrder.toMap());
+        .doc(orderRef.id);
+
+    batch.set(
+      customerOrderRef,
+      orderData,
+    );
+
+    await batch.commit();
+
+    return orderRef.id;
   }
 
-  // ── ADDRESSES ───────────────────────────────────────────────────────────
-  Stream<List<AddressModel>> addressesStream(String uid) {
+  // ─────────────────────────────────────────────────────────────────────
+  // ADMIN - ALL ORDERS
+  // ─────────────────────────────────────────────────────────────────────
+
+  Stream<List<OrderModel>> allOrdersStream() {
+    return _db
+        .collection('orders')
+        .orderBy(
+          'createdAt',
+          descending: true,
+        )
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map(
+                (doc) => OrderModel.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
+              .toList(),
+        );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // ADMIN - UPDATE ORDER STATUS
+  //
+  // Updates BOTH:
+  //
+  // orders/{orderId}
+  //
+  // and
+  //
+  // users/{customerId}/orders/{orderId}
+  //
+  // This is what makes the customer screen update
+  // immediately.
+  // ─────────────────────────────────────────────────────────────────────
+
+  Future<void> updateOrderStatus({
+    required String orderId,
+    required String customerId,
+    required String status,
+  }) async {
+    final batch = _db.batch();
+
+    // Admin copy
+    final adminOrderRef = _db
+        .collection('orders')
+        .doc(orderId);
+
+    batch.update(
+      adminOrderRef,
+      {
+        'status': status,
+      },
+    );
+
+    // Customer copy
+    final customerOrderRef = _db
+        .collection('users')
+        .doc(customerId)
+        .collection('orders')
+        .doc(orderId);
+
+    batch.update(
+      customerOrderRef,
+      {
+        'status': status,
+      },
+    );
+
+    await batch.commit();
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // ADDRESSES
+  // ─────────────────────────────────────────────────────────────────────
+
+  Stream<List<AddressModel>> addressesStream(
+    String uid,
+  ) {
     return _db
         .collection('users')
         .doc(uid)
@@ -147,12 +369,20 @@ class FirestoreService {
         .snapshots()
         .map(
           (snap) => snap.docs
-              .map((doc) => AddressModel.fromMap(doc.id, doc.data()))
+              .map(
+                (doc) => AddressModel.fromMap(
+                  doc.id,
+                  doc.data(),
+                ),
+              )
               .toList(),
         );
   }
 
-  Future<void> addAddress(String uid, AddressModel address) async {
+  Future<void> addAddress(
+    String uid,
+    AddressModel address,
+  ) async {
     await _db
         .collection('users')
         .doc(uid)
@@ -160,7 +390,10 @@ class FirestoreService {
         .add(address.toMap());
   }
 
-  Future<void> deleteAddress(String uid, String addressId) async {
+  Future<void> deleteAddress(
+    String uid,
+    String addressId,
+  ) async {
     await _db
         .collection('users')
         .doc(uid)
@@ -169,7 +402,10 @@ class FirestoreService {
         .delete();
   }
 
-  Future<void> setDefaultAddress(String uid, String addressId) async {
+  Future<void> setDefaultAddress(
+    String uid,
+    String addressId,
+  ) async {
     final batch = _db.batch();
 
     final all = await _db
@@ -179,12 +415,23 @@ class FirestoreService {
         .get();
 
     for (final doc in all.docs) {
-      batch.update(doc.reference, {'isDefault': false});
+      batch.update(
+        doc.reference,
+        {
+          'isDefault': false,
+        },
+      );
     }
 
     batch.update(
-      _db.collection('users').doc(uid).collection('addresses').doc(addressId),
-      {'isDefault': true},
+      _db
+          .collection('users')
+          .doc(uid)
+          .collection('addresses')
+          .doc(addressId),
+      {
+        'isDefault': true,
+      },
     );
 
     await batch.commit();
