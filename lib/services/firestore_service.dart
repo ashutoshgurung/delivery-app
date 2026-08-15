@@ -354,17 +354,7 @@ class FirestoreService {
 
     await batch.commit();
   }
-  // ─────────────────────────────────────────────────────────────────────
-// ADMIN - DELETE ORDER
-//
-// Deletes BOTH:
-//
-// orders/{orderId}
-//
-// and
-//
-// users/{customerId}/orders/{orderId}
-// ─────────────────────────────────────────────────────────────────────
+ 
 
 Future<void> deleteOrder({
   required String orderId,
@@ -391,10 +381,7 @@ Future<void> deleteOrder({
   await batch.commit();
 }
 
-  // ─────────────────────────────────────────────────────────────────────
-  // ADDRESSES
-  // ─────────────────────────────────────────────────────────────────────
-
+ 
   Stream<List<AddressModel>> addressesStream(
     String uid,
   ) {

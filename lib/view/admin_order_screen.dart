@@ -27,7 +27,6 @@ class _AdminOrderBody extends StatelessWidget {
         title: const Text(
           'Orders',
           style: TextStyle(fontWeight: FontWeight.bold),
-          
         ),
         centerTitle: true,
       ),

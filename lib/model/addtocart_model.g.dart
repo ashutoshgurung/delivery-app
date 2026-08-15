@@ -1,10 +1,8 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+
 
 part of 'addtocart_model.dart';
 
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
+
 
 class AddtocartModelAdapter extends TypeAdapter<AddtocartModel> {
   @override

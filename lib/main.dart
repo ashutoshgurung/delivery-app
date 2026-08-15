@@ -151,7 +151,7 @@ void main() async {
         // ── Khalti payment ────────────────────────────────────────
         Provider<KhaltiService>(
           create: (_) => KhaltiService(
-            baseUrl: 'http://10.0.2.2:3000', // TODO: your backend URL
+            baseUrl: 'http://192.168.0.4:3000', // TODO: your backend URL
           ),
         ),
         ChangeNotifierProvider<PaymentViewModel>(

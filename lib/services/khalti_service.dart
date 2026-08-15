@@ -3,16 +3,12 @@ import 'package:food_ordering_app/model/payment_model.dart';
 import 'package:http/http.dart' as http;
 
 
-/// This service talks ONLY to your own backend.
-/// Your backend holds the Khalti secret key and calls Khalti's
-/// /epayment/initiate/ and /epayment/lookup/ endpoints on your behalf.
-/// The Flutter app must never hold the secret key.
 class KhaltiService {
   final String baseUrl;
   final http.Client _client;
 
   KhaltiService({
-    required this.baseUrl, // e.g. https://your-backend.com/api
+    required this.baseUrl, 
     http.Client? client,
   }) : _client = client ?? http.Client();
 
