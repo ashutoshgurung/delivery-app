@@ -838,7 +838,6 @@ class _StatusBadge
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     Color color;
 
     switch (status) {
@@ -869,35 +868,6 @@ class _StatusBadge
       default:
         color = Colors.grey;
     }
-=======
-    final config = switch (status) {
-      'delivered' => (
-        color: Colors.green,
-        icon: Icons.check_circle_rounded,
-        label: 'Delivered',
-      ),
-      'preparing' => (
-        color: Colors.orange,
-        icon: Icons.restaurant_rounded,
-        label: 'Preparing',
-      ),
-      'out_for_delivery' => (
-        color: Colors.deepOrange,
-        icon: Icons.delivery_dining_rounded,
-        label: 'Out for Delivery',
-      ),
-      'cancelled' => (
-        color: Colors.red,
-        icon: Icons.cancel_rounded,
-        label: 'Cancelled',
-      ),
-      _ => (
-        color: Colors.blue,
-        icon: Icons.access_time_rounded,
-        label: 'Pending',
-      ),
-    };
->>>>>>> origin/main
 
     return Container(
       padding:

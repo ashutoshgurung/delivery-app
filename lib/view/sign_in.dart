@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:food_ordering_app/navigation/bottom_navigation_screen.dart';
 import 'package:food_ordering_app/services/firestore_service.dart';
 import 'package:food_ordering_app/utils/validator.dart';
-<<<<<<< HEAD
 import 'package:food_ordering_app/view/admin_dashboard.dart';
-=======
-import 'package:food_ordering_app/view/admin_dashboard_screen.dart';
->>>>>>> origin/main
 import 'package:food_ordering_app/view/sign_up.dart';
 import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
 import 'package:provider/provider.dart';
@@ -413,7 +409,6 @@ class _SignInScreenState extends State<SignInScreen> {
                         Expanded(
                           child: GestureDetector(
                             onTap: () async {
-<<<<<<< HEAD
                               final authViewModel = context
                                   .read<AuthViewModel>();
                               final success = await authViewModel
@@ -461,30 +456,6 @@ class _SignInScreenState extends State<SignInScreen> {
                                     ),
                                   ),
                                 );
-=======
-                              final authviewModel = context
-                                  .read<AuthViewModel>();
-                              final success = await authviewModel
-                                  .signInWithGoogle();
-                              if (!success) {
-                                return;
-                              }
-                              final role = await authviewModel
-                                  .getCurrentUserRole();
-                              if (!context.mounted) return;
-                              if (role == 'admin') {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => AdminDashboardScreen(),
-                                  ),
-                                );
-                              } else {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  '/navigation',
-                                );
->>>>>>> origin/main
                               }
                             },
                             child: Container(

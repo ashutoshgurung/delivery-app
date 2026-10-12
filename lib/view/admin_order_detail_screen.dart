@@ -275,10 +275,13 @@ class AdminOrderScreen extends StatefulWidget {
   const AdminOrderScreen({super.key});
 
   @override
-  State<AdminOrderScreen> createState() => _AdminOrderScreenState();
+  State<AdminOrderScreen> createState() =>
+      _AdminOrderScreenState();
 }
 
-class _AdminOrderScreenState extends State<AdminOrderScreen> {
+class _AdminOrderScreenState
+    extends State<AdminOrderScreen> {
+
   @override
   void initState() {
     super.initState();
@@ -293,15 +296,21 @@ class _AdminOrderScreenState extends State<AdminOrderScreen> {
     final vm = context.watch<AdminViewModel>();
 
     if (vm.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
     if (vm.errorMessage != null) {
-      return Center(child: Text(vm.errorMessage!));
+      return Center(
+        child: Text(vm.errorMessage!),
+      );
     }
 
     if (vm.orders.isEmpty) {
-      return const Center(child: Text('No orders found'));
+      return const Center(
+        child: Text('No orders found'),
+      );
     }
 
     return ListView.builder(
@@ -310,63 +319,54 @@ class _AdminOrderScreenState extends State<AdminOrderScreen> {
         final order = vm.orders[index];
 
         return Card(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        order.restaurantName,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Rs. ${order.totalPrice}\n'
-                        'Status: ${order.status}',
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                DropdownButton<String>(
-                  value: order.status,
-                  items: const [
-                    DropdownMenuItem(value: 'Pending', child: Text('Pending')),
-                    DropdownMenuItem(
-                      value: 'Confirmed',
-                      child: Text('Confirmed'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Preparing',
-                      child: Text('Preparing'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Out for Delivery',
-                      child: Text('Out for Delivery'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Delivered',
-                      child: Text('Delivered'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'Cancelled',
-                      child: Text('Cancelled'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value == null) return;
+          child: ListTile(
+            title: Text(order.restaurantName),
 
-                    context.read<AdminViewModel>().updateOrderStatus(
+            subtitle: Text(
+              'Rs. ${order.totalPrice}\n'
+              'Status: ${order.status}',
+            ),
+
+            trailing: DropdownButton<String>(
+              value: order.status,
+
+              items: const [
+                DropdownMenuItem(
+                  value: 'Pending',
+                  child: Text('Pending'),
+                ),
+                DropdownMenuItem(
+                  value: 'Confirmed',
+                  child: Text('Confirmed'),
+                ),
+                DropdownMenuItem(
+                  value: 'Preparing',
+                  child: Text('Preparing'),
+                ),
+                DropdownMenuItem(
+                  value: 'Out for Delivery',
+                  child: Text('Out for Delivery'),
+                ),
+                DropdownMenuItem(
+                  value: 'Delivered',
+                  child: Text('Delivered'),
+                ),
+                DropdownMenuItem(
+                  value: 'Cancelled',
+                  child: Text('Cancelled'),
+                ),
+              ],
+
+              onChanged: (value) {
+                if (value == null) return;
+
+                context
+                    .read<AdminViewModel>()
+                    .updateOrderStatus(
                       order.id,
                       value,
                     );
-                  },
-                ),
-              ],
+              },
             ),
           ),
         );

@@ -39,6 +39,7 @@ class DeliveryScreen extends StatelessWidget {
 
               const SizedBox(height: 60),
 
+              /// TITLE
               Text(
                 "🎉 Thank you for your order!",
                 textAlign: TextAlign.center,
@@ -50,7 +51,7 @@ class DeliveryScreen extends StatelessWidget {
 
               const SizedBox(height: 80),
 
-              
+              /// RECEIPT BUTTON
               _button(
                 color: Colors.red,
 
@@ -79,7 +80,7 @@ class DeliveryScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-          
+              /// TRACK ORDER BUTTON
               _button(
                 color: Colors.orange,
                 text: "Track Order",

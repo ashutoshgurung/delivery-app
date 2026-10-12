@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:food_ordering_app/model/payment_model.dart';
 
-<<<<<<< HEAD
 /// ⚠️ DEV/TEST-ONLY VERSION ⚠️
 /// This calls Khalti's epayment API DIRECTLY from the app using your
 /// SECRET key. That means the secret key ships inside your APK/IPA —
@@ -16,9 +15,6 @@ import 'package:food_ordering_app/model/payment_model.dart';
 /// function) that holds the secret key, and have this class call
 /// YOUR backend instead — see the previous version of this file for
 /// that shape.
-=======
-
->>>>>>> origin/main
 class KhaltiService {
   KhaltiService({required this.secretKey, this.useTestEnvironment = true, http.Client? client})
     : _client = client ?? http.Client();
@@ -32,16 +28,9 @@ class KhaltiService {
 
   final http.Client _client;
 
-<<<<<<< HEAD
   String get _baseUrl => useTestEnvironment
       ? 'https://dev.khalti.com/api/v2/epayment'
       : 'https://khalti.com/api/v2/epayment';
-=======
-  KhaltiService({
-    required this.baseUrl, 
-    http.Client? client,
-  }) : _client = client ?? http.Client();
->>>>>>> origin/main
 
   Map<String, String> get _headers => {
     'Authorization': 'key $secretKey',

@@ -140,7 +140,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     );
   }
 
-<<<<<<< HEAD
   String _getSelectedPaymentMethod() {
     switch (_selectedPayment) {
       case 0:
@@ -153,107 +152,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         return 'Khalti';
       default:
         return 'Unknown';
-=======
-  Future<void> _placeOrder(List<AddtocartModel> items) async {
-    if (_isPlacingOrder) return;
-
-    setState(() {
-      _isPlacingOrder = true;
-    });
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) {
-        setState(() {
-          _isPlacingOrder = false;
-        });
-
-        _showSnack('Please login before placing an order.', Colors.red);
-
-        return;
-      }
-
-      final orderId = 'ORD-${DateTime.now().millisecondsSinceEpoch}';
-
-      final orderItems = items.map((item) {
-        return {'name': item.name, 'qty': item.quantity, 'price': item.price};
-      }).toList();
-
-      final total = _total(items).toInt();
-
-      final order = OrderModel(
-        id: orderId,
-        restaurantName: widget.restaurantName,
-        items: orderItems,
-        totalPrice: total,
-        status: 'pending',
-        createdAt: DateTime.now(),
-
-        customerId: user.uid,
-        customerName: user.displayName ?? 'Customer',
-        customerEmail: user.email ?? '',
-      );
-
-      // Khalti
-      if (_selectedPayment == 3) {
-        setState(() {
-          _isPlacingOrder = false;
-        });
-
-        if (!mounted) return;
-
-        final paymentRequest = OrderPaymentRequest(
-          orderId: orderId,
-          orderName: 'Order from ${widget.restaurantName}',
-          amountInPaisa: total * 100,
-          customerName: user.displayName ?? 'Guest',
-          customerEmail: user.email ?? '',
-          customerPhone: user.phoneNumber ?? '',
-        );
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PaymentScreen(order: paymentRequest),
-          ),
-        );
-
-        return;
-      }
-
-      // Save order to Firebase
-      final firestoreService = FirestoreService();
-
-      await firestoreService.placeOrder(user.uid, order);
-
-      if (!mounted) return;
-
-      // Receipt
-      context.read<ReceiptProvider>().createReceipt(
-        orderId: orderId,
-        items: orderItems,
-      );
-
-      // Clear cart
-      context.read<AddtocartProvider>().clearCart();
-
-      setState(() {
-        _isPlacingOrder = false;
-      });
-
-      _showOrderSuccess();
-    } catch (e) {
-      debugPrint('PLACE ORDER ERROR: $e');
-
-      if (!mounted) return;
-
-      setState(() {
-        _isPlacingOrder = false;
-      });
-
-      _showSnack('Failed to place order. Please try again.', Colors.red);
->>>>>>> origin/main
     }
   }
 

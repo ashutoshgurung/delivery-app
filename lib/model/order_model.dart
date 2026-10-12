@@ -10,11 +10,8 @@
 //   final double? lat;
 //   final double? lng;
 //   final String? address;
-<<<<<<< HEAD
 //   final String? customerEmail;
 //   final String? paymentMethod;
-=======
->>>>>>> origin/main
 
 //   const OrderModel({
 //     required this.id,
@@ -26,11 +23,8 @@
 //     this.lat,
 //     this.lng,
 //     this.address,
-<<<<<<< HEAD
 //     this.customerEmail,
 //     this.paymentMethod,
-=======
->>>>>>> origin/main
 //   });
 
 //   factory OrderModel.fromMap(String id, Map<String, dynamic> map) {
@@ -44,11 +38,8 @@
 //       lat: (map['lat'] != null) ? (map['lat'] as num).toDouble() : null,
 //       lng: (map['lng'] != null) ? (map['lng'] as num).toDouble() : null,
 //       address: map['address'],
-<<<<<<< HEAD
 //       customerEmail: map['customerEmail'],
 //       paymentMethod: map['paymentMethod'],
-=======
->>>>>>> origin/main
 //     );
 //   }
 
@@ -61,16 +52,12 @@
 //     'lat': lat,
 //     'lng': lng,
 //     'address': address,
-<<<<<<< HEAD
 //     'customerEmail': customerEmail,
 //     'paymentMethod': paymentMethod,
-=======
->>>>>>> origin/main
 //   };
 // }
 
 
-<<<<<<< HEAD
 // import 'package:cloud_firestore/cloud_firestore.dart';
 
 // class OrderModel {
@@ -174,8 +161,6 @@
 //   }
 // }
 
-=======
->>>>>>> origin/main
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OrderModel {
@@ -185,20 +170,9 @@ class OrderModel {
   final int totalPrice;
   final String status;
   final DateTime createdAt;
-<<<<<<< HEAD
   final String? customerEmail;
   final String? paymentMethod;
   final String? userId;
-=======
-
-  final String? customerId;
-  final String? customerName;
-  final String? customerEmail;
-
-  final double? lat;
-  final double? lng;
-  final String? address;
->>>>>>> origin/main
 
   OrderModel({
     required this.id,
@@ -207,7 +181,6 @@ class OrderModel {
     required this.totalPrice,
     required this.status,
     required this.createdAt,
-<<<<<<< HEAD
     this.customerEmail,
     this.paymentMethod,
     this.userId,
@@ -258,90 +231,6 @@ class OrderModel {
       customerEmail: map['customerEmail']?.toString(),
       paymentMethod: map['paymentMethod']?.toString(),
       userId: map['userId']?.toString(),
-=======
-    this.customerId,
-    this.customerName,
-    this.customerEmail,
-    this.lat,
-    this.lng,
-    this.address,
-  });
-
-  factory OrderModel.fromMap(
-    String id,
-    Map<String, dynamic> map,
-  ) {
-    return OrderModel(
-      id: id,
-      restaurantName: map['restaurantName'] ?? '',
-      items: List<Map<String, dynamic>>.from(
-        (map['items'] ?? []).map(
-          (item) => Map<String, dynamic>.from(item),
-        ),
-      ),
-      totalPrice: (map['totalPrice'] ?? 0) is int
-          ? map['totalPrice']
-          : (map['totalPrice'] as num).toInt(),
-      status: map['status'] ?? 'pending',
-
-      createdAt: map['createdAt'] is Timestamp
-          ? (map['createdAt'] as Timestamp).toDate()
-          : DateTime.now(),
-
-      customerId: map['customerId'],
-      customerName: map['customerName'],
-      customerEmail: map['customerEmail'],
-
-      lat: map['lat'] != null
-          ? (map['lat'] as num).toDouble()
-          : null,
-
-      lng: map['lng'] != null
-          ? (map['lng'] as num).toDouble()
-          : null,
-
-      address: map['address'],
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'restaurantName': restaurantName,
-      'items': items,
-      'totalPrice': totalPrice,
-      'status': status,
-      'createdAt': Timestamp.fromDate(createdAt),
-
-      'customerId': customerId,
-      'customerName': customerName,
-      'customerEmail': customerEmail,
-
-      'lat': lat,
-      'lng': lng,
-      'address': address,
-    };
-  }
-
-  OrderModel copyWith({
-    String? status,
-    double? lat,
-    double? lng,
-    String? address,
-  }) {
-    return OrderModel(
-      id: id,
-      restaurantName: restaurantName,
-      items: items,
-      totalPrice: totalPrice,
-      status: status ?? this.status,
-      createdAt: createdAt,
-      customerId: customerId,
-      customerName: customerName,
-      customerEmail: customerEmail,
-      lat: lat ?? this.lat,
-      lng: lng ?? this.lng,
-      address: address ?? this.address,
->>>>>>> origin/main
     );
   }
 }
