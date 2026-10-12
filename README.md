@@ -9,6 +9,7 @@ Customers browse restaurants, build a cart, choose a delivery location on a map 
 ## Features
 
 ### Customer
+
 - Email/password and Google sign-in
 - Restaurant and food browsing, search and favourites
 - Cart with local persistence
@@ -18,6 +19,7 @@ Customers browse restaurants, build a cart, choose a delivery location on a map 
 - Profile management with image upload
 
 ### Admin
+
 - Dashboard overview
 - Category and food item management with image upload
 - Order management with status updates and order details
@@ -34,8 +36,6 @@ Customers browse restaurants, build a cart, choose a delivery location on a map 
 ![Order Receipt Screen](screenshots/customer/order_receipt_screen.jpg)
 ![Live Tracking Screen](screenshots/customer/live_tracking_screen.jpg)
 
-
-
 ### Admin
 
 ![Admin Dashboard Screen](screenshots/admin/admin_dashboard_screen.jpg)
@@ -44,19 +44,18 @@ Customers browse restaurants, build a cart, choose a delivery location on a map 
 ![Admin Order Screen](screenshots/admin/admin_order_screen.jpg)
 ![Admin Store Settings Screen](screenshots/admin/admin_store_settings_screen.jpg)
 
-
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Flutter, Dart |
-| State management | Provider (MVVM) |
-| Authentication | Firebase Authentication, Google Sign-In |
-| Database | Cloud Firestore |
-| File storage | Firebase Storage |
-| Local storage | Hive |
-| Payments | Khalti SDK, Node.js (Express) verification server |
-| Maps and location | flutter_map, geolocator, geocoding |
+| Layer             | Technology                                        |
+| ----------------- | ------------------------------------------------- |
+| Framework         | Flutter, Dart                                     |
+| State management  | Provider (MVVM)                                   |
+| Authentication    | Firebase Authentication, Google Sign-In           |
+| Database          | Cloud Firestore                                   |
+| File storage      | Firebase Storage                                  |
+| Local storage     | Hive                                              |
+| Payments          | Khalti SDK, Node.js (Express) verification server |
+| Maps and location | flutter_map, geolocator, geocoding                |
 
 ## Architecture
 
@@ -74,6 +73,7 @@ The app follows an MVVM structure. UI code lives in `view`, state and logic in `
 ## Getting Started
 
 ### Prerequisites
+
 - Flutter SDK (Dart ^3.11.4)
 - A Firebase project with Authentication, Cloud Firestore and Storage enabled
 - A Khalti merchant account (test credentials are sufficient)
@@ -109,3 +109,6 @@ Set the `role` field to `admin` on your user document in the Firestore `users` c
 
 **Ashutosh Gurung**
 GitHub: [ashutoshgurung](https://github.com/ashutoshgurung)
+
+**Ashutosh Gurung**
+Linkedln: [ashhutoshgurung](https://www.linkedin.com/in/ashutosh-gurung-a14ab1353/)
