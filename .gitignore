@@ -57,3 +57,4 @@ lib/config/keys.dart
 key.properties
 *.jks
 *.keystore
+node_modules/
