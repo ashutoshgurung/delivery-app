@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:food_ordering_app/viewmodel/location_view_model.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 class LiveTrackingScreen extends StatelessWidget {
@@ -65,10 +65,41 @@ class LiveTrackingScreen extends StatelessWidget {
                 ],
               ),
 
+              // ⬅️ BACK BUTTON
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12, top: 12),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Material(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 4,
+                      child: InkWell(
+                        customBorder: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        onTap: () => Navigator.pop(context),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(
+                            Icons.arrow_back,
+                            color: Colors.black87,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
               // 📦 TOP CARD
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.fromLTRB(12, 64, 12, 12),
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -116,7 +147,13 @@ class LiveTrackingScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                   ),
                   onPressed: vm.initLocation,
-                  child: const Text("Start Live Tracking"),
+                  child: Text(
+                    "Start Live Tracking",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],

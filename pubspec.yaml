@@ -55,6 +55,7 @@ dependencies:
   khalti_checkout_flutter: ^1.0.1
   carousel_slider: ^5.1.2
   smooth_page_indicator: ^2.0.1
+  google_sign_in: ^7.2.0
   
   
 

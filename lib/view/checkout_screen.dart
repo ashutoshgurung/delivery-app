@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:food_ordering_app/model/addtocart_model.dart';
 import 'package:food_ordering_app/model/order_model.dart';
 import 'package:food_ordering_app/model/payment_model.dart';
+import 'package:food_ordering_app/services/firestore_service.dart';
 import 'package:food_ordering_app/view/delivery_in_progress_screen.dart';
 import 'package:food_ordering_app/view/payment_screen.dart';
 import 'package:food_ordering_app/viewmodel/addtoCart_view_model.dart';
@@ -139,89 +140,378 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     );
   }
 
-  void _placeOrder(List<AddtocartModel> items) async {
-    setState(() => _isPlacingOrder = true);
-
-    try {
-      // Step 1: get basic info
-      final user = FirebaseAuth.instance.currentUser;
-      final uid = user?.uid;
-      final orderId = 'ORD-${DateTime.now().millisecondsSinceEpoch}';
-
-      // Step 2: turn cart items into a simple list for the order
-      final orderItems = items
-          .map(
-            (item) => {
-              'name': item.name,
-              'qty': item.quantity,
-              'price': item.price,
-            },
-          )
-          .toList();
-
-      final total = _total(items).toInt();
-
-      // Step 3: build the order object (for Firestore / receipts)
-      final order = OrderModel(
-        id: orderId,
-        restaurantName: widget.restaurantName,
-        items: orderItems,
-        totalPrice: total,
-        status: 'pending',
-        createdAt: DateTime.now(),
-      );
-
-      // Step 4: if user picked Khalti (index 3), go to PaymentScreen first
-      if (_selectedPayment == 3) {
-        setState(() => _isPlacingOrder = false);
-
-        if (!mounted) return;
-
-        // Build the payment request PaymentScreen actually needs
-        final paymentRequest = OrderPaymentRequest(
-          orderId: orderId,
-          orderName: 'Order from ${widget.restaurantName}',
-          amountInPaisa: total * 100, // Rs. -> paisa
-          customerName: user?.displayName ?? 'Guest',
-          customerEmail: user?.email ?? '',
-          customerPhone: user?.phoneNumber ?? '',
-        );
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PaymentScreen(order: paymentRequest),
-          ),
-        );
-        return; // stop here, don't save to Firestore yet
-      }
-
-      // Step 5: for every other payment method, save straight to Firestore
-      if (uid != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .collection('orders')
-            .add(order.toMap());
-      }
-
-      // Step 6: save to receipt provider
-      if (!mounted) return;
-      context.read<ReceiptProvider>().createReceipt(
-        orderId: orderId,
-        items: orderItems,
-      );
-
-      // Step 7: clear the cart
-      context.read<AddtocartProvider>().clearCart();
-
-      setState(() => _isPlacingOrder = false);
-      _showOrderSuccess();
-    } catch (e) {
-      setState(() => _isPlacingOrder = false);
-      _showSnack('Failed to place order. Please try again.', Colors.red);
+  String _getSelectedPaymentMethod() {
+    switch (_selectedPayment) {
+      case 0:
+        return 'Credit Card';
+      case 1:
+        return 'eSewa';
+      case 2:
+        return 'Cash on Delivery';
+      case 3:
+        return 'Khalti';
+      default:
+        return 'Unknown';
     }
   }
+
+  // void _placeOrder(List<AddtocartModel> items) async {
+  //   setState(() => _isPlacingOrder = true);
+
+  //   try {
+  //     // Step 1: get basic info
+  //     final user = FirebaseAuth.instance.currentUser;
+  //     final uid = user?.uid;
+  //     final orderId = 'ORD-${DateTime.now().millisecondsSinceEpoch}';
+
+  //     final orderItems = items
+  //         .map(
+  //           (item) => {
+  //             'name': item.name,
+  //             'quantity': item.quantity,
+  //             'price': item.price,
+  //           },
+  //         )
+  //         .toList();
+
+  //     final total = _total(items).toInt();
+  //     final order = OrderModel(
+  //       id: orderId,
+  //       restaurantName: widget.restaurantName,
+  //       items: orderItems,
+  //       totalPrice: total,
+  //       status: 'pending',
+  //       createdAt: DateTime.now(),
+
+  //       customerEmail: user?.email,
+  //       paymentMethod: _getSelectedPaymentMethod(),
+  //     );
+
+  //     if (_selectedPayment == 3) {
+  //       setState(() => _isPlacingOrder = false);
+
+  //       if (!mounted) return;
+
+  //       // Build the payment request PaymentScreen actually needs
+  //       final paymentRequest = OrderPaymentRequest(
+  //         orderId: orderId,
+  //         orderName: 'Order from ${widget.restaurantName}',
+  //         amountInPaisa: total * 100, // Rs. -> paisa
+  //         customerName: user?.displayName ?? 'Guest',
+  //         customerEmail: user?.email ?? '',
+  //         customerPhone: user?.phoneNumber ?? '',
+  //         returnUrl: 'https://yourapp.com/payment/return',
+  //         websiteUrl: 'https://yourapp.com',
+  //       );
+
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) =>
+  //               PaymentScreen(order: paymentRequest, orderModel: order),
+  //         ),
+  //       );
+  //       return; // stop here, don't save to Firestore yet
+  //     }
+
+  //     // Step 5: for every other payment method, save straight to Firestore
+  //     if (uid != null) {
+  //       try {
+  //         await FirestoreService().placeOrder(uid, order);
+  //       } catch (e) {
+  //         await FirebaseFirestore.instance
+  //             .collection('users')
+  //             .doc(uid)
+  //             .collection('orders')
+  //             .add(order.toMap());
+  //       }
+  //     }
+
+  //     // Step 6: save to receipt provider
+  //     if (!mounted) return;
+  //     context.read<ReceiptProvider>().createReceipt(
+  //       orderId: orderId,
+  //       items: orderItems,
+  //       paymentMethod: _getSelectedPaymentMethod(),
+  //     );
+
+  //     // Step 7: clear the cart
+  //     context.read<AddtocartProvider>().clearCart();
+
+  //     setState(() => _isPlacingOrder = false);
+  //     _showOrderSuccess();
+  //   } catch (e) {
+  //     setState(() => _isPlacingOrder = false);
+  //     _showSnack('Failed to place order. Please try again.', Colors.red);
+  //   }
+  // }
+  // Future<void> _placeOrder(List<AddtocartModel> items) async {
+  //   setState(() {
+  //     _isPlacingOrder = true;
+  //   });
+
+  //   try {
+  //     final user = FirebaseAuth.instance.currentUser;
+
+  //     if (user == null) {
+  //       setState(() {
+  //         _isPlacingOrder = false;
+  //       });
+
+  //       _showSnack('Please login first', Colors.red);
+
+  //       return;
+  //     }
+
+  //     final uid = user.uid;
+
+  //     final orderId = 'ORD-${DateTime.now().millisecondsSinceEpoch}';
+
+  //     final orderItems = items.map((item) {
+  //       return {
+  //         'name': item.name,
+  //         'quantity': item.quantity,
+  //         'price': item.price,
+  //         'image': item.image,
+  //         'size': item.size,
+  //       };
+  //     }).toList();
+
+  //     final total = _total(items);
+
+  //     final paymentMethod = _getSelectedPaymentMethod();
+
+  //     final order = OrderModel(
+  //       id: orderId,
+  //       userId: uid,
+  //       restaurantName: widget.restaurantName,
+  //       items: orderItems,
+  //       totalPrice: total,
+  //       status: 'pending',
+  //       createdAt: DateTime.now(),
+  //       customerEmail: user.email,
+  //       paymentMethod: paymentMethod,
+  //       paymentStatus: _selectedPayment == 3 ? 'pending' : 'paid',
+  //     );
+
+  //     // ==========================================================
+  //     // KHALTI
+  //     // ==========================================================
+
+  //     if (_selectedPayment == 3) {
+  //       setState(() {
+  //         _isPlacingOrder = false;
+  //       });
+
+  //       if (!mounted) return;
+
+  //       final paymentRequest = OrderPaymentRequest(
+  //         orderId: orderId,
+  //         orderName: 'Order from ${widget.restaurantName}',
+  //         amountInPaisa: total.toInt() * 100,
+  //         customerName: user.displayName ?? 'Guest',
+  //         customerEmail: user.email ?? '',
+  //         customerPhone: user.phoneNumber ?? '',
+  //         returnUrl: 'https://yourapp.com/payment/return',
+  //         websiteUrl: 'https://yourapp.com',
+  //       );
+
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) =>
+  //               PaymentScreen(order: paymentRequest, orderModel: order),
+  //         ),
+  //       );
+
+  //       return;
+  //     }
+
+  //     // ==========================================================
+  //     // CASH / ESEWA / OTHER PAYMENT
+  //     // ==========================================================
+
+  //     await FirebaseFirestore.instance
+  //         .collection('orders')
+  //         .doc(orderId)
+  //         .set(order.toMap());
+
+  //     if (!mounted) return;
+
+  //     context.read<ReceiptProvider>().createReceipt(
+  //       orderId: orderId,
+  //       items: orderItems,
+  //       paymentMethod: paymentMethod,
+  //     );
+
+  //     context.read<AddtocartProvider>().clearCart();
+
+  //     setState(() {
+  //       _isPlacingOrder = false;
+  //     });
+
+  //     _showOrderSuccess();
+  //   } catch (e) {
+  //     debugPrint('PLACE ORDER ERROR: $e');
+
+  //     if (!mounted) return;
+
+  //     setState(() {
+  //       _isPlacingOrder = false;
+  //     });
+
+  //     _showSnack('Failed to place order. Please try again.', Colors.red);
+  //   }
+  // }
+  void _placeOrder(List<AddtocartModel> items) async {
+  if (_isPlacingOrder) return;
+
+  setState(() => _isPlacingOrder = true);
+
+  try {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      setState(() => _isPlacingOrder = false);
+
+      if (mounted) {
+        _showSnack(
+          'Please login before placing an order.',
+          Colors.red,
+        );
+      }
+
+      return;
+    }
+
+    final uid = user.uid;
+
+    final orderId =
+        'ORD-${DateTime.now().millisecondsSinceEpoch}';
+
+    final orderItems = items.map((item) {
+      return {
+        'name': item.name,
+        'quantity': item.quantity,
+        'qty': item.quantity,
+        'price': item.price,
+        'image': item.image,
+        'size': item.size,
+      };
+    }).toList();
+
+    final total = _total(items).toInt();
+
+    final paymentMethod =
+        _getSelectedPaymentMethod();
+
+    final order = OrderModel(
+      id: orderId,
+      restaurantName: widget.restaurantName,
+      items: orderItems,
+      totalPrice: total,
+      status: 'pending',
+      createdAt: DateTime.now(),
+      customerEmail: user.email,
+      paymentMethod: paymentMethod,
+      userId: uid,
+    );
+
+    // ---------------------------------------------------------
+    // KHALTI
+    // ---------------------------------------------------------
+
+    if (_selectedPayment == 3) {
+      setState(() => _isPlacingOrder = false);
+
+      if (!mounted) return;
+
+      final paymentRequest = OrderPaymentRequest(
+        orderId: orderId,
+        orderName:
+            'Order from ${widget.restaurantName}',
+        amountInPaisa: total * 100,
+        customerName:
+            user.displayName ?? 'Guest',
+        customerEmail:
+            user.email ?? '',
+        customerPhone:
+            user.phoneNumber ?? '',
+        returnUrl:
+            'https://yourapp.com/payment/return',
+        websiteUrl:
+            'https://yourapp.com',
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentScreen(
+            order: paymentRequest,
+            orderModel: order,
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    // ---------------------------------------------------------
+    // IMPORTANT:
+    // SAVE TO COMMON /orders COLLECTION
+    // SO ADMIN CAN SEE ALL CUSTOMER ORDERS
+    // ---------------------------------------------------------
+
+    await FirebaseFirestore.instance
+        .collection('orders')
+        .doc(orderId)
+        .set(order.toMap());
+
+    // ---------------------------------------------------------
+    // ALSO KEEP CUSTOMER'S PERSONAL ORDER HISTORY
+    // ---------------------------------------------------------
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('orders')
+        .doc(orderId)
+        .set(order.toMap());
+
+    // ---------------------------------------------------------
+    // RECEIPT
+    // ---------------------------------------------------------
+
+    if (!mounted) return;
+
+    context.read<ReceiptProvider>().createReceipt(
+      orderId: orderId,
+      items: orderItems,
+      paymentMethod: paymentMethod,
+    );
+
+    // ---------------------------------------------------------
+    // CLEAR CART
+    // ---------------------------------------------------------
+
+    context
+        .read<AddtocartProvider>()
+        .clearCart();
+
+    setState(() => _isPlacingOrder = false);
+
+    _showOrderSuccess();
+  } catch (e) {
+    setState(() => _isPlacingOrder = false);
+
+    if (mounted) {
+      _showSnack(
+        'Failed to place order. Please try again.',
+        Colors.red,
+      );
+    }
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -458,7 +748,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '47 Lazimpat Road, Kathmandu 44600',
+                      'Kaji Pokhari',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         color: _muted,

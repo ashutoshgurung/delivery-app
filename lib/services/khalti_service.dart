@@ -1,67 +1,78 @@
 import 'dart:convert';
-import 'package:food_ordering_app/model/payment_model.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:food_ordering_app/model/payment_model.dart';
 
-
-/// This service talks ONLY to your own backend.
-/// Your backend holds the Khalti secret key and calls Khalti's
-/// /epayment/initiate/ and /epayment/lookup/ endpoints on your behalf.
-/// The Flutter app must never hold the secret key.
+/// ⚠️ DEV/TEST-ONLY VERSION ⚠️
+/// This calls Khalti's epayment API DIRECTLY from the app using your
+/// SECRET key. That means the secret key ships inside your APK/IPA —
+/// anyone can decompile the app and extract it, then create fake
+/// payment sessions billed to your merchant account.
+///
+/// This is fine while you're developing and testing locally.
+/// Before you publish the app, move `initiatePayment` and
+/// `verifyPayment` into a small backend (even a single serverless
+/// function) that holds the secret key, and have this class call
+/// YOUR backend instead — see the previous version of this file for
+/// that shape.
 class KhaltiService {
-  final String baseUrl;
+  KhaltiService({required this.secretKey, this.useTestEnvironment = true, http.Client? client})
+    : _client = client ?? http.Client();
+
+  /// Your Khalti merchant SECRET key (test or live).
+  /// e.g. 'test_secret_key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  final String secretKey;
+
+  /// true -> dev.khalti.com (sandbox), false -> khalti.com (live/production)
+  final bool useTestEnvironment;
+
   final http.Client _client;
 
-  KhaltiService({
-    required this.baseUrl, // e.g. https://your-backend.com/api
-    http.Client? client,
-  }) : _client = client ?? http.Client();
+  String get _baseUrl => useTestEnvironment
+      ? 'https://dev.khalti.com/api/v2/epayment'
+      : 'https://khalti.com/api/v2/epayment';
 
-  Future<PaymentInitiationModel> initiatePayment(
-    OrderPaymentRequest request,
-  ) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/khalti/initiate'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'amount': request.amountInPaisa,
-        'purchase_order_id': request.orderId,
-        'purchase_order_name': request.orderName,
-        'customer_info': {
-          'name': request.customerName,
-          'email': request.customerEmail,
-          'phone': request.customerPhone,
-        },
-      }),
-    );
+  Map<String, String> get _headers => {
+    'Authorization': 'key $secretKey',
+    'Content-Type': 'application/json',
+  };
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return PaymentInitiationModel.fromJson(jsonDecode(response.body));
+  Future<PidxResult> initiatePayment(OrderPaymentRequest request) async {
+    final uri = Uri.parse('$_baseUrl/initiate/');
+
+    final response = await _client
+        .post(uri, headers: _headers, body: jsonEncode(request.toJson()))
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception(
+        'Could not initiate payment (${response.statusCode}): ${response.body}',
+      );
     }
-    throw KhaltiException(
-      'Failed to initiate payment: ${response.statusCode} ${response.body}',
-    );
+    debugPrint('KHALTI STATUS: ${response.statusCode}');
+    debugPrint('KHALTI RESPONSE: ${response.body}');
+
+final data = jsonDecode(response.body) as Map<String, dynamic>;
+return PidxResult.fromJson(data);
+
+    // final data = jsonDecode(response.body) as Map<String, dynamic>;
+    // return PidxResult.fromJson(data);
   }
 
   Future<PaymentVerificationModel> verifyPayment(String pidx) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/khalti/verify'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'pidx': pidx}),
-    );
+    final uri = Uri.parse('$_baseUrl/lookup/');
 
-    if (response.statusCode == 200) {
-      return PaymentVerificationModel.fromJson(jsonDecode(response.body));
+    final response = await _client
+        .post(uri, headers: _headers, body: jsonEncode({'pidx': pidx}))
+        .timeout(const Duration(seconds: 30));
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Could not verify payment (${response.statusCode}): ${response.body}',
+      );
     }
-    throw KhaltiException(
-      'Failed to verify payment: ${response.statusCode} ${response.body}',
-    );
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return PaymentVerificationModel.fromJson(data);
   }
-}
-
-class KhaltiException implements Exception {
-  final String message;
-  KhaltiException(this.message);
-
-  @override
-  String toString() => 'KhaltiException: $message';
 }

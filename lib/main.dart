@@ -82,6 +82,8 @@
 //   }
 // }
 
+import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -96,9 +98,11 @@ import 'package:food_ordering_app/view/sign_in.dart';
 import 'package:food_ordering_app/view/splash_screen.dart';
 import 'package:food_ordering_app/viewmodel/addtoCart_view_model.dart';
 import 'package:food_ordering_app/viewmodel/address_view_model.dart';
+import 'package:food_ordering_app/viewmodel/admin_view_model.dart';
 import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
 import 'package:food_ordering_app/viewmodel/favourite_provider.dart';
 import 'package:food_ordering_app/viewmodel/location_view_model.dart';
+import 'package:food_ordering_app/viewmodel/order_viewmodel.dart';
 import 'package:food_ordering_app/viewmodel/payment_view_model.dart';
 import 'package:food_ordering_app/viewmodel/profile_provider.dart';
 import 'package:food_ordering_app/viewmodel/receipt_provider.dart';
@@ -144,11 +148,14 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => LocationViewModel()),
         ChangeNotifierProvider(create: (_) => SearchViewModel()),
+        ChangeNotifierProvider(create: (_) => AdminOrderViewModel()),
+        ChangeNotifierProvider(create: (_) => OrderViewModel()),
 
         // ── Khalti payment ────────────────────────────────────────
         Provider<KhaltiService>(
           create: (_) => KhaltiService(
-            baseUrl: 'http://10.0.2.2:3000', // TODO: your backend URL
+            secretKey: 'db4a37afc34b44b398edec542b31065f',
+            useTestEnvironment: true,
           ),
         ),
         ChangeNotifierProvider<PaymentViewModel>(

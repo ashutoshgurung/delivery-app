@@ -71,6 +71,7 @@ class DeliveryScreen extends StatelessWidget {
                       builder: (_) => ReceiptScreen(
                         orderId: receiptProvider.orderId,
                         orderItems: receiptProvider.orderItems,
+                        paymentMethod: receiptProvider.paymentMethod,
                       ),
                     ),
                   );

@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:food_ordering_app/model/favourite_model.dart';
 import 'package:food_ordering_app/model/popular_restaurant_detail_screen_model.dart';
 import 'package:food_ordering_app/view/cart_screen.dart';
@@ -20,6 +21,37 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _search = TextEditingController();
+  void _performSearch() {
+    final query = _search.text.trim();
+
+    if (query.isEmpty) return;
+
+    context.read<SearchViewModel>().searchRestaurant(query);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ViewAllResturants(restaurants: restaurants),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _search.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
   int activeIndex = 0;
   final List banner = [
     'assets/images/banner1.png',
@@ -28,6 +60,75 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final List discount = ["20% OFF", "10% OFF", "30% OFF"];
+  String selectedLocation = "Pokhara";
+  final List<String> locations = [
+    'Pokhara',
+    'Kathmandu',
+    'Damauli',
+    'Dharan',
+    'Chitwan',
+  ];
+  void _showLocationPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Select Location',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...locations.map((String loc) {
+                  final bool isSelected = loc == selectedLocation;
+                  return ListTile(
+                    leading: Icon(
+                      Icons.location_on,
+                      color: isSelected ? Colors.red : Colors.grey,
+                    ),
+                    title: Text(
+                      loc,
+                      style: GoogleFonts.poppins(
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: isSelected ? Colors.red : Colors.black87,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check, color: Colors.red)
+                        : null,
+                    onTap: () {
+                      setState(() {
+                        selectedLocation = loc;
+                      });
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,11 +162,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontSize: 18,
                             ),
                           ),
-                          const Row(
-                            children: [
-                              Text('Pokhara', style: TextStyle(fontSize: 13)),
-                              Icon(Icons.arrow_drop_down),
-                            ],
+                          GestureDetector(
+                            onTap: _showLocationPicker,
+                            child: Row(
+                              children: [
+                                Text(
+                                  selectedLocation,
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                                Icon(Icons.arrow_drop_down),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -117,9 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 25),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Container(
@@ -137,17 +242,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 child: TextField(
-                  onSubmitted: (value) {
-                    if (value.trim().isNotEmpty) {
-                      context.read<SearchViewModel>().searchRestaurant(value);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ViewAllResturants(restaurants: restaurants),
-                        ),
-                      );
-                    }
+                  keyboardType: TextInputType.webSearch,
+                  textInputAction: TextInputAction.search,
+                  controller: _search,
+                  onSubmitted: (_) {
+                    _performSearch();
                   },
                   decoration: InputDecoration(
                     hintText: 'Search food, restaurants...',
@@ -155,13 +254,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.grey.shade500,
                       fontSize: 14,
                     ),
-                    prefixIcon: const Icon(Icons.search, color: Colors.red),
-                    suffixIcon: IconButton(
+                    prefixIcon: IconButton(
                       onPressed: () {},
-                      icon: const Icon(Icons.tune, color: Colors.red),
+                      icon: Icon(Icons.search, color: Colors.red),
                     ),
+                    suffixIcon: _search.text.isNotEmpty
+                        ? IconButton(
+                            onPressed: () {
+                              _search.clear();
+                            },
+                            icon: Icon(Icons.close, color: Colors.red),
+                          )
+                        : null,
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 16,
+                    ),
                   ),
                 ),
               ),
@@ -287,7 +396,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-       
 
             Consumer<FavouriteViewModel>(
               builder: (context, favouriteProvider, child) {

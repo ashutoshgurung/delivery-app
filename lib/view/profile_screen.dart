@@ -257,6 +257,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           body: vm.isLoading
               ? const Center(child: CircularProgressIndicator(color: red))
+              : vm.state == ProfileState.error
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.error_outline, color: red, size: 48),
+                        const SizedBox(height: 12),
+                        Text(
+                          vm.errorMessage ?? 'Unable to load your profile.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: vm.loadUser,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: red,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               : SingleChildScrollView(
                   child: Column(
                     children: [

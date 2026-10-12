@@ -13,7 +13,6 @@ class SearchViewModel extends ChangeNotifier {
 
   String get searchQuery => _searchQuery;
 
-  // Load restaurant data
   void setRestaurants(List<PopularRestaurantDetailScreenModel> restaurants) {
     _allRestaurants = restaurants;
     _filteredRestaurants = restaurants;
@@ -21,7 +20,6 @@ class SearchViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Search logic
   void searchRestaurant(String query) {
     _searchQuery = query;
 
@@ -36,7 +34,6 @@ class SearchViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Clear search
   void clearSearch() {
     _searchQuery = "";
 

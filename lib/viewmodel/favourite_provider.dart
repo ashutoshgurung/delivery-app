@@ -11,10 +11,8 @@ class FavouriteViewModel extends ChangeNotifier {
 
   StreamSubscription? _sub;
 
-  // UI always reads from Hive — works offline too
   List<FavouriteModel> get favourites => _box.values.toList();
 
-  // called once after login
   void init(String uid) {
     _sub?.cancel();
 
@@ -31,7 +29,6 @@ class FavouriteViewModel extends ChangeNotifier {
     });
   }
 
-  // Called on logout — clears stream and local cache
   void reset() {
     _sub?.cancel();
     _sub = null;
@@ -50,16 +47,14 @@ class FavouriteViewModel extends ChangeNotifier {
     if (uid == null) return;
 
     if (isFavourite(item)) {
-      // Optimistic update — remove from Hive immediately
       _box.delete(item.title);
       notifyListeners();
-      // Then remove from Firestore — stream will confirm
+
       await _service.removeFavourite(uid, item.title);
     } else {
-      // Optimistic update — add to Hive immediately
       _box.put(item.title, item);
       notifyListeners();
-      // Then add to Firestore — stream will confirm
+
       await _service.addFavourite(uid, item);
     }
   }

@@ -7,8 +7,6 @@ class AddressProvider extends ChangeNotifier {
 
   List<AddressModel> get addresses => _box.values.toList();
 
-  // Returns the default address, or the first one if none marked default,
-  // or null if the box is empty
   AddressModel? get defaultAddress {
     final all = _box.values.toList();
     if (all.isEmpty) return null;
@@ -19,7 +17,7 @@ class AddressProvider extends ChangeNotifier {
   }
 
   void addAddress(AddressModel address) {
-    // If this is the first address, make it default automatically
+    
     if (_box.isEmpty) {
       _box.add(AddressModel(
         id: address.id,
@@ -37,8 +35,7 @@ class AddressProvider extends ChangeNotifier {
     final wasDefault = _box.getAt(index)?.isDefault ?? false;
     _box.deleteAt(index);
 
-    // If deleted address was default and there are remaining addresses,
-    // promote the first one to default
+  
     if (wasDefault && _box.isNotEmpty) {
       _promoteFirstToDefault();
     }
@@ -46,7 +43,6 @@ class AddressProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Makes one address the default and clears default on all others
   void setDefault(int index) {
     final all = _box.values.toList();
 
@@ -71,7 +67,7 @@ class AddressProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Clears all addresses — useful on logout
+
   void clearAddresses() {
     _box.clear();
     notifyListeners();

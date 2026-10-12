@@ -19,8 +19,8 @@ class ProfileViewModel extends ChangeNotifier {
   ProfileViewModel({
     FirestoreService? firestoreService,
     AuthServices? authService,
-  })  : _firestoreService = firestoreService ?? FirestoreService(),
-        _authService = authService ?? AuthServices();
+  }) : _firestoreService = firestoreService ?? FirestoreService(),
+       _authService = authService ?? AuthServices();
 
   // ── State ──────────────────────────────────────────────────────────────────
   ProfileState _state = ProfileState.idle;
@@ -52,7 +52,6 @@ class ProfileViewModel extends ChangeNotifier {
   int get favouriteCount => _favourites.length;
   int get addressCount => _addresses.length;
 
-  // ── Load user + subscribe streams ──────────────────────────────────────────
   Future<void> loadUser() async {
     _setState(ProfileState.loading);
 
@@ -61,12 +60,21 @@ class ProfileViewModel extends ChangeNotifier {
       if (uid == null) throw Exception("No authenticated user");
 
       final doc = await _firestoreService.getUser(uid);
-      final data = doc.data() as Map<String, dynamic>?;
+      var data = doc.data();
+      if (data == null) {
+        final authUser = FirebaseAuth.instance.currentUser!;
+        await _firestoreService.saveUser(
+          uid: uid,
+          name: authUser.displayName ?? '',
+          email: authUser.email ?? '',
+          imageUrl: authUser.photoURL ?? '',
+        );
+        data = (await _firestoreService.getUser(uid)).data();
+      }
       if (data == null) throw Exception("User data not found");
 
       _user = UserModel.fromMap(uid, data);
 
-      // Subscribe to real-time streams
       _subscribeStreams(uid);
 
       _setState(ProfileState.idle);
@@ -77,29 +85,25 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   void _subscribeStreams(String uid) {
-    // Orders
     _ordersSub?.cancel();
     _ordersSub = _firestoreService.ordersStream(uid).listen((list) {
       _orders = list;
       notifyListeners();
-    });
+    }, onError: (Object error) => _handleStreamError(error));
 
-    // Favourites
     _favouritesSub?.cancel();
     _favouritesSub = _firestoreService.favouritesStream(uid).listen((list) {
       _favourites = list;
       notifyListeners();
-    });
+    }, onError: (Object error) => _handleStreamError(error));
 
-    // Addresses
     _addressesSub?.cancel();
     _addressesSub = _firestoreService.addressesStream(uid).listen((list) {
       _addresses = list;
       notifyListeners();
-    });
+    }, onError: (Object error) => _handleStreamError(error));
   }
 
-  // ── Orders ─────────────────────────────────────────────────────────────────
   Future<void> placeOrder(OrderModel order) async {
     if (_user == null) return;
     try {
@@ -110,7 +114,6 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Addresses ──────────────────────────────────────────────────────────────
   Future<void> addAddress(AddressModel address) async {
     if (_user == null) return;
     try {
@@ -141,20 +144,21 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Profile image ──────────────────────────────────────────────────────────
   Future<void> updateProfileImage(File imageFile) async {
     if (_user == null) return;
     _isUploadingImage = true;
     notifyListeners();
 
     try {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('profile_images/${_user!.uid}.jpg');
+      final ref = FirebaseStorage.instance.ref().child(
+        'profile_images/${_user!.uid}.jpg',
+      );
       await ref.putFile(imageFile);
       final downloadUrl = await ref.getDownloadURL();
       await _firestoreService.updateUser(
-          uid: _user!.uid, imageUrl: downloadUrl);
+        uid: _user!.uid,
+        imageUrl: downloadUrl,
+      );
       _user = _user!.copyWith(imageUrl: downloadUrl);
     } catch (e) {
       _errorMessage = "Failed to update profile image";
@@ -164,7 +168,6 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Update name ────────────────────────────────────────────────────────────
   Future<bool> updateName(String newName) async {
     if (_user == null) return false;
     try {
@@ -179,7 +182,6 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Logout ─────────────────────────────────────────────────────────────────
   Future<bool> logout() async {
     try {
       _ordersSub?.cancel();
@@ -199,7 +201,6 @@ class ProfileViewModel extends ChangeNotifier {
     }
   }
 
-  // ── Cleanup ────────────────────────────────────────────────────────────────
   @override
   void dispose() {
     _ordersSub?.cancel();
@@ -208,7 +209,6 @@ class ProfileViewModel extends ChangeNotifier {
     super.dispose();
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
   void _setState(ProfileState newState) {
     _state = newState;
     notifyListeners();
@@ -216,6 +216,13 @@ class ProfileViewModel extends ChangeNotifier {
 
   void clearError() {
     _errorMessage = null;
+    if (_state == ProfileState.error) _state = ProfileState.idle;
+    notifyListeners();
+  }
+
+  void _handleStreamError(Object error) {
+    _errorMessage = _friendlyError(error);
+    _state = ProfileState.error;
     notifyListeners();
   }
 

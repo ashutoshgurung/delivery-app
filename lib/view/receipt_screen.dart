@@ -5,15 +5,17 @@ import 'package:intl/intl.dart';
 class ReceiptScreen extends StatelessWidget {
   final List<Map<String, dynamic>> orderItems;
   final String orderId;
+  final String paymentMethod;
 
   const ReceiptScreen({
     super.key,
     required this.orderItems,
     required this.orderId,
+    required this.paymentMethod,
   });
 
   double get _subtotal =>
-      orderItems.fold(0, (sum, item) => sum + item['price'] * item['qty']);
+      orderItems.fold(0, (sum, item) => sum + item['price'] * item['quantity']);
 
   double get _deliveryFee => 2.99;
 
@@ -54,7 +56,6 @@ class ReceiptScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // ── Success Banner ──────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 24),
@@ -107,7 +108,6 @@ class ReceiptScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Receipt Card ─────────────────────────────────────────────
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -161,7 +161,6 @@ class ReceiptScreen extends StatelessWidget {
 
                   const Divider(height: 1, color: Color(0xFFF0F0F0)),
 
-                  // Order Meta
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -206,7 +205,6 @@ class ReceiptScreen extends StatelessWidget {
                     child: Divider(color: Color(0xFFF0F0F0)),
                   ),
 
-                  // Pricing breakdown
                   _buildPriceRow('Subtotal', _subtotal),
                   _buildPriceRow('Delivery Fee', _deliveryFee),
                   _buildPriceRow('Tax (8%)', _tax),
@@ -220,7 +218,6 @@ class ReceiptScreen extends StatelessWidget {
                     child: _DashedDivider(),
                   ),
 
-                  // Total
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     child: Row(
@@ -250,7 +247,6 @@ class ReceiptScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Delivery Info ────────────────────────────────────────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -276,15 +272,9 @@ class ReceiptScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _infoRow(
-                    Icons.location_on_outlined,
-                    '123 Main Street, Kathmandu',
-                  ),
+                  _infoRow(Icons.location_on_outlined, 'Kaji Pokhari, Pokhara'),
                   const SizedBox(height: 8),
-                  _infoRow(
-                    Icons.credit_card_outlined,
-                    'Paid via Credit Card ••••4242',
-                  ),
+                  _infoRow(_getPaymentIcon(), 'Paid via $paymentMethod'),
                   const SizedBox(height: 8),
                   _infoRow(Icons.timer_outlined, 'Estimated: 30–45 min'),
                 ],
@@ -293,7 +283,6 @@ class ReceiptScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // ── Back to Home Button ─────────────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -341,7 +330,7 @@ class ReceiptScreen extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                '${item['qty']}x',
+                '${item['quantity']}x', // FIX: was 'qty'
                 style: GoogleFonts.poppins(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -358,7 +347,7 @@ class ReceiptScreen extends StatelessWidget {
             ),
           ),
           Text(
-            'Rs.${(item['price'] * item['qty']).toStringAsFixed(0)}',
+            'Rs.${(item['price'] * item['quantity']).toStringAsFixed(0)}', // FIX: was 'qty'
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -415,9 +404,29 @@ class ReceiptScreen extends StatelessWidget {
       ],
     );
   }
+
+  IconData _getPaymentIcon() {
+    switch (paymentMethod.toLowerCase()) {
+      case 'credit card':
+      case 'debit card':
+        return Icons.credit_card_outlined;
+
+      case 'esewa':
+        return Icons.account_balance_wallet_outlined;
+
+      case 'khalti':
+        return Icons.account_balance_wallet_outlined;
+
+      case 'cash in hand':
+      case 'cash on delivery':
+        return Icons.payments_outlined;
+
+      default:
+        return Icons.payment_outlined;
+    }
+  }
 }
 
-// Simple dashed divider widget
 class _DashedDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

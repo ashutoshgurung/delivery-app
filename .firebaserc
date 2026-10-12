@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "ecommerce-a3b28"
-  }
+    "default": "foodapp-207b7"
+  },
+  "targets": {},
+  "etags": {}
 }

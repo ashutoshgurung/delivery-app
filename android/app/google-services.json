@@ -12,7 +12,20 @@
           "package_name": "com.example.food_ordering_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "888354609930-al6t081e8e3076trs2n5r7inocbhq7hm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.food_ordering_app",
+            "certificate_hash": "bb993cb730fee361e9b31ffd0bdeba8944e5fe0f"
+          }
+        },
+        {
+          "client_id": "888354609930-juu3htvt5m7u8cruij1238j6q6arj6o8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAYQrrJWUmA7fLPOGsBdmACWhcXX3kEND8"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "888354609930-juu3htvt5m7u8cruij1238j6q6arj6o8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "888354609930-7a901i97gi7hn9lj0mclcmergqde20q2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.foodOrderingApp"
+              }
+            }
+          ]
         }
       }
     }

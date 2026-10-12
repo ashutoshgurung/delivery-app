@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:food_ordering_app/services/firestore_service.dart';
 import 'package:food_ordering_app/utils/validator.dart';
 import 'package:food_ordering_app/view/sign_in.dart';
 import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
@@ -12,6 +14,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController =
@@ -21,6 +24,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscureConfirm = true;
   bool _agreed = false;
   int _strength = 0;
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   void _onPasswordChanged(String val) {
     int s = 0;
@@ -44,7 +56,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_agreed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Please agree to the Terms of Service and Privacy Policy"),
+          content: Text(
+            "Please agree to the Terms of Service and Privacy Policy",
+          ),
         ),
       );
       return;
@@ -59,18 +73,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!mounted) return;
 
     if (success) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Account created, but its profile could not be loaded.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      try {
+        await FirestoreService().saveUser(
+          uid: user.uid,
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Account created, but profile save failed: $e'),
+          ),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const SignInScreen()),
+        );
+        return;
+      }
+
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Account created successfully")),
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => SignInScreen()),
+        MaterialPageRoute(builder: (_) => const SignInScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authViewModel.errorMessage ?? "Sign up failed"),
-        ),
+        SnackBar(content: Text(authViewModel.errorMessage ?? "Sign up failed")),
       );
     }
   }
@@ -94,32 +139,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(36),
                   bottomRight: Radius.circular(36),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 30,
-            right: 30,
-            child: Column(
-              children: List.generate(
-                3,
-                (row) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: List.generate(
-                      3,
-                      (col) => Container(
-                        margin: const EdgeInsets.only(left: 8),
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.25),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ),
@@ -164,7 +183,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         letterSpacing: -1.2,
                       ),
                     ),
-                    const SizedBox(height: 6),
+
                     const SizedBox(height: 30),
                     Container(
                       width: double.infinity,
@@ -184,6 +203,65 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 20),
+
+                          // ── NEW: name field ──
+                          const Text(
+                            'FULL NAME',
+                            style: TextStyle(
+                              color: Color(0xFFAAAAAA),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8F8F8),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFEEEEEE),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const SizedBox(width: 14),
+                                const Icon(
+                                  Icons.person_outline_rounded,
+                                  color: Color(0xFFCC0000),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: nameController,
+                                    validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                        ? 'Name is required'
+                                        : null,
+                                    style: const TextStyle(
+                                      color: Color(0xFF111111),
+                                      fontSize: 14,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: 'Your full name',
+                                      hintStyle: TextStyle(
+                                        color: Color(0xFFCCCCCC),
+                                        fontSize: 13,
+                                      ),
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
                           const Text(
                             'EMAIL ADDRESS',
                             style: TextStyle(
@@ -199,7 +277,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8F8F8),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFEEEEEE)),
+                              border: Border.all(
+                                color: const Color(0xFFEEEEEE),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -251,7 +331,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8F8F8),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFEEEEEE)),
+                              border: Border.all(
+                                color: const Color(0xFFEEEEEE),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -342,7 +424,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8F8F8),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFEEEEEE)),
+                              border: Border.all(
+                                color: const Color(0xFFEEEEEE),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -471,13 +555,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFCC0000),
                           borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFCC0000).withOpacity(0.35),
-                              blurRadius: 24,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
                         ),
                         child: Center(
                           child: isLoading

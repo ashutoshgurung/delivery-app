@@ -16,12 +16,22 @@ class ViewAllResturants extends StatefulWidget {
 }
 
 class _ViewAllResturantsState extends State<ViewAllResturants> {
+  final _searchController = TextEditingController();
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(() {
+      setState(() {});
+    });
     Future.microtask(() {
       context.read<SearchViewModel>().setRestaurants(widget.restaurants);
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -59,24 +69,42 @@ class _ViewAllResturantsState extends State<ViewAllResturants> {
                   ),
                 ],
               ),
-              child: TextField(
-                onChanged: (value) {
-                  context.read<SearchViewModel>().searchRestaurant(value);
+              child: Consumer<SearchViewModel>(
+                builder: (context, searchvm, child) {
+                  return TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      context.read<SearchViewModel>().searchRestaurant(value);
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search food, restaurants...',
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 14,
+                      ),
+                      prefixIcon: const Icon(Icons.search, color: Colors.red),
+                      suffixIcon: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (_searchController.text.isNotEmpty)
+                            IconButton(
+                              onPressed: () {
+                                _searchController.clear();
+                                searchvm.clearSearch();
+                              },
+                              icon: Icon(Icons.clear, color: Colors.red),
+                            ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: Icon(Icons.tune, color: Colors.red),
+                          ),
+                        ],
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  );
                 },
-                decoration: InputDecoration(
-                  hintText: 'Search food, restaurants...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey.shade500,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: const Icon(Icons.search, color: Colors.red),
-                  suffixIcon: IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.tune, color: Colors.red),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                ),
               ),
             ),
           ),

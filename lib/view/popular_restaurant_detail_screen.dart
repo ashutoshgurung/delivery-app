@@ -302,7 +302,6 @@ class _PopularRestaurantDetailScreenState
         children: [
           const SizedBox(height: 27),
 
-          // ── Hero image ───────────────────────────────────────
           Stack(
             children: [
               Image.asset(
@@ -355,7 +354,7 @@ class _PopularRestaurantDetailScreenState
 
           const SizedBox(height: 16),
 
-          // ── Name + delivery time ─────────────────────────────
+         
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Row(
@@ -381,7 +380,7 @@ class _PopularRestaurantDetailScreenState
 
           const SizedBox(height: 8),
 
-          // ── Stars + location ─────────────────────────────────
+       
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Row(
@@ -406,7 +405,7 @@ class _PopularRestaurantDetailScreenState
 
           const SizedBox(height: 16),
 
-          // ── Category tabs ────────────────────────────────────
+
           SizedBox(
             height: 50,
             child: ListView.builder(
@@ -456,7 +455,6 @@ class _PopularRestaurantDetailScreenState
 
           const SizedBox(height: 12),
 
-          // ── Menu items ───────────────────────────────────────
           Expanded(
             child: ListView.builder(
               itemCount: selectedItems.length,

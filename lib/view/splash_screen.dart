@@ -82,7 +82,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 5), () {
       if (!mounted) return;
 
-      // CHECK: if already logged in → go home, else → go to SignIn
+  
       final user = FirebaseAuth.instance.currentUser;
 
       Navigator.pushReplacement(

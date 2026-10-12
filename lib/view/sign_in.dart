@@ -1,6 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:food_ordering_app/navigation/bottom_navigation_screen.dart';
+import 'package:food_ordering_app/services/firestore_service.dart';
 import 'package:food_ordering_app/utils/validator.dart';
+import 'package:food_ordering_app/view/admin_dashboard.dart';
 import 'package:food_ordering_app/view/sign_up.dart';
 import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +22,21 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
+  Future<void> _saveSignedInUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw StateError('Signed-in user is unavailable.');
+    }
+
+    final email = user.email ?? emailController.text.trim();
+    await FirestoreService().saveUser(
+      uid: user.uid,
+      name: user.displayName ?? email.split('@').first,
+      email: email,
+      imageUrl: user.photoURL ?? '',
+    );
+  }
+
   @override
   void dispose() {
     emailController.dispose();
@@ -34,44 +52,6 @@ class _SignInScreenState extends State<SignInScreen> {
       backgroundColor: const Color(0xFF111111),
       body: Stack(
         children: [
-          // ── glow top-left ──
-          Positioned(
-            top: -100,
-            left: -80,
-            child: Container(
-              width: 340,
-              height: 340,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFCC0000).withOpacity(0.25),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // ── glow bottom-right ──
-          Positioned(
-            bottom: 40,
-            right: -60,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFCC0000).withOpacity(0.12),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 26),
@@ -82,7 +62,6 @@ class _SignInScreenState extends State<SignInScreen> {
                   children: [
                     const SizedBox(height: 30),
 
-                    // ── Brand ──
                     Row(
                       children: [
                         Container(
@@ -90,12 +69,11 @@ class _SignInScreenState extends State<SignInScreen> {
                           height: 44,
                           decoration: BoxDecoration(
                             color: const Color(0xFFCC0000),
-                            borderRadius: BorderRadius.circular(11),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            Icons.restaurant_rounded,
-                            color: Colors.white,
-                            size: 22,
+                          child: ClipRRect(
+                            borderRadius: BorderRadiusGeometry.circular(12),
+                            child: Image.asset("assets/images/mainlogo.png"),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -113,7 +91,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     SizedBox(height: size.height * 0.07),
 
-                    // ── Heading ──
                     const Text(
                       'Hey,\nWelcome\nBack ',
                       style: TextStyle(
@@ -138,7 +115,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     SizedBox(height: size.height * 0.055),
 
-                    // ── Email ──
                     const Text(
                       'EMAIL',
                       style: TextStyle(
@@ -193,7 +169,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 22),
 
-                    // ── Password ──
                     const Text(
                       'PASSWORD',
                       style: TextStyle(
@@ -262,7 +237,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 16),
 
-                    // ── Remember + Forgot ──
                     Row(
                       children: [
                         GestureDetector(
@@ -319,7 +293,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 36),
 
-                    // ── Sign In button ──
                     GestureDetector(
                       onTap: () async {
                         if (_formKey.currentState!.validate()) {
@@ -328,17 +301,44 @@ class _SignInScreenState extends State<SignInScreen> {
                             email: emailController.text.trim(),
                             password: passwordController.text.trim(),
                           );
+                          if (!mounted) return;
                           if (success) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => NavigationScreen(),
-                              ),
-                            );
+                            try {
+                              await _saveSignedInUser();
+                            } catch (e) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Signed in, but profile sync failed: $e',
+                                  ),
+                                ),
+                              );
+                            }
+                            if (!mounted) return;
+                            // FIX: route admins to the dashboard, everyone else to the app.
+                            if (authViewModel.isAdmin) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AdminDashboardScreen(),
+                                ),
+                              );
+                            } else {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => NavigationScreen(),
+                                ),
+                              );
+                            }
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text("Invalid email or password"),
+                                content: Text(
+                                  authViewModel.errorMessage ??
+                                      "Invalid email or password",
+                                ),
                               ),
                             );
                           }
@@ -349,18 +349,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFE80000), Color(0xFF8B0000)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFCC0000).withOpacity(0.4),
-                              blurRadius: 28,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
+                          color: const Color(0xFFCC0000),
                         ),
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -384,10 +373,8 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 34),
 
-                    // ── Divider ──
                     Row(
                       children: [
                         Expanded(
@@ -417,12 +404,60 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 24),
 
-                    // ── Social ──
                     Row(
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () {},
+                            onTap: () async {
+                              final authViewModel = context
+                                  .read<AuthViewModel>();
+                              final success = await authViewModel
+                                  .signInWithGoogle();
+                              if (!mounted) return;
+                              if (success) {
+                                try {
+                                  await _saveSignedInUser();
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Signed in, but profile sync failed: $e',
+                                      ),
+                                    ),
+                                  );
+                                }
+                                if (!mounted) return;
+
+                                // FIX: isAdmin is a sync getter now, not a Future — no `await`.
+                                final isAdmin = authViewModel.isAdmin;
+                                if (isAdmin) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AdminDashboardScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  // FIX: previously fell through and did nothing.
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => NavigationScreen(),
+                                    ),
+                                  );
+                                }
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      authViewModel.errorMessage ??
+                                          'Google sign in failed',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
                             child: Container(
                               height: 52,
                               decoration: BoxDecoration(
@@ -494,7 +529,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     const SizedBox(height: 40),
 
-                    // ── Go to Sign Up ──
                     Center(
                       child: GestureDetector(
                         onTap: () {
