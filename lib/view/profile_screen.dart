@@ -201,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -211,26 +211,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-        child: ListTile(
-          onTap: onTap,
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: logout ? Colors.red.shade50 : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(12),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          clipBehavior: Clip.antiAlias,
+          child: ListTile(
+            onTap: onTap,
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: logout ? Colors.red.shade50 : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: logout ? Colors.red : red),
             ),
-            child: Icon(icon, color: logout ? Colors.red : red),
-          ),
-          title: Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w500,
-              color: logout ? Colors.red : Colors.black87,
+            title: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+                color: logout ? Colors.red : Colors.black87,
+              ),
             ),
+            trailing: logout
+                ? null
+                : const Icon(Icons.arrow_forward_ios, size: 16),
           ),
-          trailing: logout
-              ? null
-              : const Icon(Icons.arrow_forward_ios, size: 16),
         ),
       ),
     );

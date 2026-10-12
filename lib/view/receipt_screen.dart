@@ -108,6 +108,10 @@ class ReceiptScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
+<<<<<<< HEAD
+=======
+           
+>>>>>>> origin/main
             Container(
               width: double.infinity,
               decoration: BoxDecoration(

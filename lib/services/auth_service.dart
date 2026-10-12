@@ -1,10 +1,44 @@
+<<<<<<< HEAD
 import 'package:cloud_firestore/cloud_firestore.dart';
+=======
+// import 'package:firebase_auth/firebase_auth.dart';
+
+// class AuthServices {
+//   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+//   Future<User?> signUp({
+//     required String email,
+//     required String password,
+//   }) async {
+//     UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+//       email: email,
+//       password: password,
+//     );
+//     return userCredential.user;
+//   }
+
+//   Future<User?> logIn({required String email, required String password}) async {
+//     UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+//       email: email,
+//       password: password,
+//     );
+
+//     return userCredential.user;
+//   }
+
+//   Future<void> logOut() async {
+//     await _auth.signOut();
+//   }
+// }
+
+>>>>>>> origin/main
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthServices {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+<<<<<<< HEAD
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
 
@@ -13,6 +47,10 @@ class AuthServices {
   late final Future<void> _googleSignInInitialization =
       _googleSignIn.initialize();
 
+=======
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+
+>>>>>>> origin/main
   Future<User?> signUp({
     required String email,
     required String password,
@@ -40,7 +78,11 @@ class AuthServices {
   }
 
   Future<User?> signInWithGoogle() async {
+<<<<<<< HEAD
     await _googleSignInInitialization;
+=======
+    await _googleSignIn.initialize();
+>>>>>>> origin/main
 
     final GoogleSignInAccount googleUser =
         await _googleSignIn.authenticate();
@@ -58,6 +100,7 @@ class AuthServices {
     return userCredential.user;
   }
 
+<<<<<<< HEAD
   Future<String> getUserRole(String uid) async {
     final document =
         await _firestore.collection('users').doc(uid).get();
@@ -71,7 +114,13 @@ class AuthServices {
     return data?['role'] ?? 'user';
   }
 
+=======
+>>>>>>> origin/main
   Future<void> logOut() async {
     await _auth.signOut();
+
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {}
   }
 }

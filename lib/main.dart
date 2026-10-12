@@ -94,11 +94,16 @@ import 'package:food_ordering_app/model/addon_model.dart';
 import 'package:food_ordering_app/model/favourite_model.dart';
 import 'package:food_ordering_app/navigation/bottom_navigation_screen.dart';
 import 'package:food_ordering_app/services/khalti_service.dart';
+import 'package:food_ordering_app/view/admin_dashboard_screen.dart';
 import 'package:food_ordering_app/view/sign_in.dart';
 import 'package:food_ordering_app/view/splash_screen.dart';
 import 'package:food_ordering_app/viewmodel/addtoCart_view_model.dart';
 import 'package:food_ordering_app/viewmodel/address_view_model.dart';
+<<<<<<< HEAD
 import 'package:food_ordering_app/viewmodel/admin_view_model.dart';
+=======
+import 'package:food_ordering_app/viewmodel/admin_order_view_model.dart';
+>>>>>>> origin/main
 import 'package:food_ordering_app/viewmodel/auth_view_model.dart';
 import 'package:food_ordering_app/viewmodel/favourite_provider.dart';
 import 'package:food_ordering_app/viewmodel/location_view_model.dart';
@@ -149,13 +154,20 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LocationViewModel()),
         ChangeNotifierProvider(create: (_) => SearchViewModel()),
         ChangeNotifierProvider(create: (_) => AdminOrderViewModel()),
+<<<<<<< HEAD
         ChangeNotifierProvider(create: (_) => OrderViewModel()),
+=======
+>>>>>>> origin/main
 
         // ── Khalti payment ────────────────────────────────────────
         Provider<KhaltiService>(
           create: (_) => KhaltiService(
+<<<<<<< HEAD
             secretKey: 'db4a37afc34b44b398edec542b31065f',
             useTestEnvironment: true,
+=======
+            baseUrl: 'http://192.168.0.4:3000', // TODO: your backend URL
+>>>>>>> origin/main
           ),
         ),
         ChangeNotifierProvider<PaymentViewModel>(
